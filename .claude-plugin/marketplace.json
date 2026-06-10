@@ -1,0 +1,18 @@
+{
+  "name": "gainwix-workmates",
+  "owner": {
+    "name": "GainWix",
+    "email": "hello@aptonworks.com"
+  },
+  "description": "GainWix AI workmates for Claude Code. Currently ships the Cloud Deployment Workmate.",
+  "metadata": {
+    "description": "GainWix AI workmates for Claude Code. Currently ships the Cloud Deployment Workmate."
+  },
+  "plugins": [
+    {
+      "name": "gainwix",
+      "source": "./",
+      "description": "Deploy your app to Google Cloud Run through an AI teammate — detect, plan, gate, deploy, document. No cloud expertise required."
+    }
+  ]
+}
