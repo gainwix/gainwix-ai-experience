@@ -67,9 +67,9 @@ With the plugin enabled and Node available, the `cloud-run` MCP server should st
 /mcp
 ```
 
-You should see `cloud-run` connected, exposing tools like `list-services`,
-`get-service`, `deploy-local-folder`. The developer never configured this — it
-came from `.mcp.json` + your install-time config. If it shows as failed, confirm
+You should see `cloud-run` connected, exposing tools like `list_services`,
+`get_service`, `deploy_local_folder`, `create_project`. The developer never
+configured this — it came from `.mcp.json` + your install-time config. If it shows as failed, confirm
 Node/`npx` are installed and that `gcloud auth application-default login` (or a
 service-account key) is in place.
 
@@ -83,20 +83,20 @@ production deploys, even in Auto mode. You can unit-test it without deploying:
 mkdir -p /tmp/gxtest/.gainwix
 printf '{"target":"non-production","service":"demo","reason":"feature branch"}' \
   > /tmp/gxtest/.gainwix/deploy-context.json
-printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy-local-folder","tool_input":{}}' \
+printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy_local_folder","tool_input":{}}' \
   | node hooks/gate-production.js; echo "exit=$?"
 # Expect: no JSON output, exit=0
 
 # Production -> asks (forces human approval)
 printf '{"target":"production","service":"api","reason":"deploying main to prod"}' \
   > /tmp/gxtest/.gainwix/deploy-context.json
-printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy-local-folder","tool_input":{}}' \
+printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy_local_folder","tool_input":{}}' \
   | node hooks/gate-production.js; echo "exit=$?"
 # Expect: JSON with "permissionDecision":"ask", exit=0
 
 # Missing context -> fail safe, asks
 rm -f /tmp/gxtest/.gainwix/deploy-context.json
-printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy-local-folder","tool_input":{}}' \
+printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy_local_folder","tool_input":{}}' \
   | node hooks/gate-production.js; echo "exit=$?"
 # Expect: JSON with "permissionDecision":"ask", exit=0
 ```
@@ -106,13 +106,31 @@ classify a production target, and confirm Claude Code shows you a permission
 prompt at the deploy step that you must approve by hand — and that switching to
 Auto mode does **not** remove that prompt.
 
-## 6. End-to-end demo (the definition of done)
+## 6. Test the no-project onboarding path
+
+`gcp_project` is optional — a developer with no GCP project (or no idea what one
+is) must still be able to onboard. To exercise it:
+
+1. Install (Option B) and **leave the GCP project ID empty** when prompted.
+2. Run `/gx-init` in an app repo and confirm the workmate:
+   - lists your existing projects (`list_projects`) and offers a pick list, or
+   - if the account has none, offers to **create** one (`create_project`) with
+     an ID suggested from the repo name, and
+   - if the account has **no billing account**, points you to
+     `console.cloud.google.com/billing` as the single manual step, then resumes.
+3. Confirm `/gx-gcp-deploy` with no configured project routes through the same
+   resolution instead of failing.
+
+No "organization" is ever required — personal accounts don't have one.
+
+## 7. End-to-end demo (the definition of done)
 
 From a **separate** application repository:
 
 1. `/plugin marketplace add /path/to/gainwix-ai-experience`
 2. `/plugin install gainwix@gainwix-workmates`
-3. `/gx-init` — confirm it detects the stack and validates GCP.
+3. `/gx-init` — confirm it detects the stack and validates GCP (or finds/creates
+   a project if none was configured).
 4. `/gx-sim` — confirm it prints a plan and applies nothing.
 5. `/gx-gcp-deploy` — answer at most a couple of questions, approve the gates,
    and get a live Cloud Run URL plus a `created-deployment.md` in that repo.

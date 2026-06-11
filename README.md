@@ -40,7 +40,7 @@ Claude Code prompts you for:
 
 | Setting | Required | Notes |
 | :------ | :------- | :---- |
-| **GCP project ID** | yes | The project to deploy into. |
+| **GCP project ID** | no | The project to deploy into. Leave empty if you don't have one yet — `/gx-init` will find or create one for you. |
 | **GCP region** | no | Defaults to `us-central1`. |
 | **Service account key** | no | Path to a JSON key. Leave empty to use your local `gcloud` Application Default Credentials. |
 | **Trust mode** | no | `suggest` (default, every gate interactive) or `auto` (Gate 1 may auto-approve; production never does). |
@@ -55,6 +55,7 @@ The Cloud Run MCP is provisioned automatically from these values — there is no
   gcloud auth login
   gcloud auth application-default login
   ```
+- **A Google Cloud billing account.** You do **not** need a GCP project (`/gx-init` creates one) or an organization (personal accounts don't have one). But Cloud Run requires billing, and adding a billing account (a card) is the one step only you can do, at <https://console.cloud.google.com/billing>. It's the single console visit this plugin will ever ask of you.
 
 Authentication uses your own credentials under least privilege — nothing is hardcoded.
 
@@ -64,7 +65,7 @@ Authentication uses your own credentials under least privilege — nothing is ha
 
 ```
 /gx                 # one-line map of every command
-/gx-init            # onboard: detect stack, validate GCP access, confirm project/region
+/gx-init            # onboard: detect stack, validate GCP access, pick/create a project
 /gx-sim             # dry run: show the deploy plan (infra + cost + diff), then stop
 /gx-gcp-deploy      # the headline: detect → plan → approve → deploy → document
 /gx-help <command>  # deep dive on any command
@@ -98,7 +99,7 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | :------ | :----- | :------ |
 | `/gx` | ✅ | One-line orientation. |
 | `/gx-help <cmd>` | ✅ | Deep dive on one command. |
-| `/gx-init` | ✅ | Onboard: detect stack, validate GCP, confirm project/region. |
+| `/gx-init` | ✅ | Onboard: detect stack, validate GCP, pick or create a project. |
 | `/gx-sim` | ✅ | Dry-run plan (Gate 1 in isolation). Never applies. |
 | `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow. |
 | `/gx-add`, `/gx-rm` | 🚧 | Add/remove connectors or MCPs. |

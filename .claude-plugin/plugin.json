@@ -9,9 +9,9 @@
   "userConfig": {
     "gcp_project": {
       "type": "string",
-      "title": "GCP project ID",
-      "description": "The Google Cloud project to deploy into (e.g. my-app-prod).",
-      "required": true
+      "title": "GCP project ID (optional)",
+      "description": "The Google Cloud project to deploy into (e.g. my-app-prod). Leave empty if you don't have one yet — /gx-init will find or create one for you.",
+      "required": false
     },
     "gcp_region": {
       "type": "string",
