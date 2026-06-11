@@ -50,11 +50,7 @@ The Cloud Run MCP is provisioned automatically from these values — there is no
 ### Prerequisites
 
 - **Node.js** (the Cloud Run MCP runs via `npx`; the production gate runs via `node`).
-- **gcloud** authenticated, unless you supplied a service-account key:
-  ```bash
-  gcloud auth login
-  gcloud auth application-default login
-  ```
+- **gcloud CLI** installed (unless you supplied a service-account key). You don't need to sign in ahead of time — if your Google sign-in is missing or expired, the workmate refreshes it for you; your only step is approving access in the browser window it opens.
 - **A Google Cloud billing account.** You do **not** need a GCP project (`/gx-init` creates one) or an organization (personal accounts don't have one). But Cloud Run requires billing, and adding a billing account (a card) is the one step only you can do, at <https://console.cloud.google.com/billing>. It's the single console visit this plugin will ever ask of you.
 
 Authentication uses your own credentials under least privilege — nothing is hardcoded.

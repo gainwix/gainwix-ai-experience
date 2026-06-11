@@ -28,7 +28,7 @@ Read the configured mode from `default_mode` (`${user_config.default_mode}`). Th
 
 Run this sequence. Narrate it in plain language as you go.
 
-If no GCP project is configured (`${user_config.gcp_project}` is empty) or the configured one is unreachable, don't fail — run **Project resolution** from the onboarding section below first, then continue the deploy with the resolved project.
+If credentials are expired/missing or no GCP project is configured (`${user_config.gcp_project}` is empty) or the configured one is unreachable, don't fail and don't hand the developer terminal commands — run **Authentication** and **Project resolution** from the onboarding section below yourself first, then continue the deploy with the resolved project.
 
 ### 1. Pre-flight git hygiene
 Mirror how GainWix ships its own product. **Confirm with the developer before doing any of this.**
@@ -49,7 +49,7 @@ Determine the required GCP infrastructure. **Cloud Run service first.** Flag cle
 - **The diff from current state** — call `list_services` / `get_service` to see what already exists, and show what changes.
 
 ### 4. Ask the minimum
-Only if *genuinely* ambiguous, ask **2–3 questions max**. Each as a short list of options, **recommended option first and pre-selected as the default**. Do not interrogate. If you can reasonably infer it, infer it and state your assumption instead of asking.
+Only if *genuinely* ambiguous, ask **2–3 questions max**. **Present each as an interactive multiple-choice question via the `AskUserQuestion` tool** — a short list of options with the **recommended option first and pre-selected as the default**. Do not dump a numbered markdown list and tell the developer to "reply with a number" — that's the fallback only when the picker is unavailable (e.g. you're running as a dispatched subagent, where `AskUserQuestion` doesn't exist; the `/gx` commands avoid that by running this playbook in the main conversation). Do not interrogate. If you can reasonably infer something, infer it and state your assumption instead of asking.
 
 ### 5. Write the deploy context (REQUIRED before any deploy)
 Before you call any Cloud Run deploy tool, write `.gainwix/deploy-context.json` in the project working directory so the trust gate can read your classification. Create the `.gainwix/` directory if needed. Write exactly:
@@ -87,18 +87,36 @@ Do **not** implement monitoring in this build. In `created-deployment.md`, leave
 Run steps 1–4 and produce the full plan (infra + cost + diff), then **STOP**. This is Gate 1 in isolation. **Never apply anything.** Do not write `deploy-context.json`, do not call any deploy tool. End by telling the developer exactly what `/gx-gcp-deploy` would do.
 
 ## Onboarding (`/gx-init`)
-Detect the stack (step 2's inspection). Then resolve the project and validate access.
+Detect the stack (step 2's inspection). Then authenticate, resolve the project, and validate access.
+
+### Authentication (you run it — never send them to a terminal)
+The Cloud Run MCP uses **Application Default Credentials (ADC)** — a credential that is **separate** from `gcloud auth login`. Logging into the `gcloud` CLI does **not** create ADC, and having ADC does not log in the CLI. So a developer can be "logged in" yet the MCP still reports `UNAUTHENTICATED` — that is normal and means ADC is missing, not that they did anything wrong. The credential you need for deploys is **ADC**.
+
+**Check before you ever log in. This is the rule that stops the re-login loop:**
+1. Run `gcloud auth application-default print-access-token`. If it prints a token, ADC is valid — **do not start any login flow, do not check files, just continue.**
+2. Only if that fails do you trigger a single browser login.
+
+**The single browser login (correct way on a developer's own machine):**
+- Run `gcloud auth application-default login` and **let gcloud open the browser itself — do NOT pass `--no-launch-browser`.** The developer picks their account and approves; gcloud completes the exchange and writes ADC on its own. **There is no verification code to paste, so nothing can expire.**
+- Launch it **once, in the background** (it stays open until the browser approval finishes). Tell the developer: "A browser window is opening — pick your account and approve, then come back." Then **poll** `gcloud auth application-default print-access-token` every few seconds until it succeeds. Do **not** wrap it in one foreground call that times out.
+- **Never start a second login while one is pending.** Every launch creates a brand-new OAuth challenge; overlapping launches are exactly what causes "the code expired / log in again." One login, then poll. If it's taking a while, wait and poll — do not re-run.
+
+**Headless only (genuinely no browser — rare for this audience):** run `gcloud auth application-default login --no-launch-browser` **once, in the background**, capture the URL it prints, show it as a clickable link, ask the developer for the verification code as a single question, and feed that code to the **same** running process. Never re-run the command to "get a fresh code" — re-running is what invalidates the previous one.
+
+If a service-account key was configured (`gcp_credentials`), ADC comes from that key and you can skip all of the above — just try the MCP call.
+
+Keep this whole step quiet and fast: one token check, and at most one browser approval. Don't narrate file paths or walk the developer through gcloud internals — they want to log in and pick a project, nothing more.
 
 ### Project resolution
 A developer does **not** need to arrive with a GCP project (and never needs an "organization" — personal Google accounts don't have one). Handle all three states:
 
 1. **A project is configured** (`${user_config.gcp_project}` is non-empty): validate that credentials work and the project/region are reachable — prefer `list_services` / `list_projects` through the MCP; fall back to `gcloud auth list` / `gcloud config` via Bash. Confirm project and region with the developer.
-2. **No project configured, or the configured one is unreachable:** call `list_projects`.
+2. **No project configured, or the configured one is unreachable:** if the call fails because of auth, run the **Authentication** flow above first (you refresh the login — they don't), then call `list_projects`.
    - If the account has usable projects, present them as a short options list (most likely candidate first, pre-selected) and let the developer pick.
    - If the account has none, offer to create one with `create_project` — suggest an ID derived from the repo name (e.g. `<repo-name>-app`), let them confirm or rename. Explain it in plain words: "you don't have a Google Cloud project yet — it's a free container that holds your app's stuff. I can create one now."
 3. **Billing:** Cloud Run needs a billing account linked to the project. `create_project` attaches the first available billing account automatically. If the account has **no billing account at all**, that is the one thing you cannot do for them: point them to https://console.cloud.google.com/billing to add one (adding a card takes ~2 minutes), say plainly that this is the only console step they'll ever be asked to do, and pick up where you left off once it exists.
 
-Once a project is resolved, use it for the rest of the session everywhere `${user_config.gcp_project}` would be used, and tell the developer to save it in the plugin settings so it sticks across sessions.
+Once a project is resolved, **set it so nothing downstream complains about a missing project**: run `gcloud config set project <id>` and `gcloud auth application-default set-quota-project <id>` yourself. Then use it for the rest of the session everywhere `${user_config.gcp_project}` would be used, and tell the developer to save it in the plugin settings so it sticks across sessions.
 
 ### Then
 Scaffold anything missing (e.g. note a missing Dockerfile and offer buildpacks). Do **not** deploy. End with a one-line "you're ready — run /gx-gcp-deploy when you want to ship."
@@ -114,3 +132,4 @@ You can answer these any time using `get_service` / `list_services` and `gcloud 
 - Surface risk honestly — if something is high-blast-radius, say so.
 - Never invent resource state; read it from the MCP/`gcloud`.
 - Never print secrets or the contents of a service-account key.
+- **Never hand the developer a terminal command to run.** If something needs `gcloud` (auth, config, a binding the MCP can't do), you run it via Bash. The only thing you may ask of them is the irreducible human step — approving access in a browser, or adding a billing card — and you make even that a single click or paste, never "go run X."
