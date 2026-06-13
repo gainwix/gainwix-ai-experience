@@ -118,8 +118,22 @@ A developer does **not** need to arrive with a GCP project (and never needs an "
 
 Once a project is resolved, **set it so nothing downstream complains about a missing project**: run `gcloud config set project <id>` and `gcloud auth application-default set-quota-project <id>` yourself. Then use it for the rest of the session everywhere `${user_config.gcp_project}` would be used, and tell the developer to save it in the plugin settings so it sticks across sessions.
 
+### Scaffold the dev workflow (idempotent — never overwrite)
+The `/gx-*` dev-workflow commands (`/gx-go`, `/gx-next`, `/gx-sing`, `/gx-ping`, `/gx-qa`, …) expect a small set of repo files to exist. As part of `/gx-init`, **create the ones that are missing** by copying from the bundled scaffold at `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/`. **Only create a file if it doesn't already exist — never overwrite or modify an existing one** (the developer's real `BACKLOG.md`/`ABOUT.md`/etc. always wins). Use Bash:
+
+```bash
+SCAFFOLD="${CLAUDE_PLUGIN_ROOT}/templates/scaffold"
+for f in ABOUT.md ACTION-ITEMS.md BACKLOG.md CHANGELOG.md; do
+  [ -e "$f" ] || { cp "$SCAFFOLD/$f" "$f"; echo "created $f"; }
+done
+mkdir -p changes && [ -e changes/.gitkeep ] || { : > changes/.gitkeep; echo "created changes/"; }
+mkdir -p qa && [ -e qa/QA.md ] || { cp "$SCAFFOLD/qa/QA.md" qa/QA.md; echo "created qa/QA.md"; }
+```
+
+This sets up: `ABOUT.md` (project overview to fill in), `ACTION-ITEMS.md` (raw-idea inbox with the `<!-- Add action items below this line -->` marker), `BACKLOG.md` (planned queue with the `### Autonomy preamble` + `## Backlog Items` that `/gx-go` reads), `CHANGELOG.md` (the `/gx-go` change-record index), the `changes/` directory, and `qa/QA.md` (the `/gx-qa` regression suite). Tell the developer plainly what you created vs. what already existed, and that `ABOUT.md` + `qa/QA.md` are templates to fill in. Note the two things the scaffold does **not** provide: the `qa/runner/` Playwright harness that `/gx-qa` needs, and the trunk-branch convention — the scaffolded `BACKLOG.md` preamble references `<trunk>`; confirm whether this repo's integration branch is `main`, `develop`, or other, and tell them to adjust it (the dev commands assume a `develop` trunk by default). Don't deploy and don't run any dev-workflow command — just lay down the files. Skip this scaffolding only if the developer says they don't want the dev workflow.
+
 ### Then
-Scaffold anything missing (e.g. note a missing Dockerfile and offer buildpacks). Do **not** deploy. End with a one-line "you're ready — run /gx-gcp-deploy when you want to ship."
+Scaffold anything else missing for a clean deploy (e.g. note a missing Dockerfile and offer buildpacks). Do **not** deploy. End with a one-line "you're ready — run /gx-gcp-deploy to ship, or /gx-issue-add … to start the dev workflow."
 
 ## Rollback & scale questions
 You can answer these any time using `get_service` / `list_services` and `gcloud run services update-traffic`. Explain rollback as "point traffic back to the previous revision" and scaling as "min/max instances and concurrency," in plain terms.
