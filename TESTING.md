@@ -106,20 +106,27 @@ classify a production target, and confirm Claude Code shows you a permission
 prompt at the deploy step that you must approve by hand — and that switching to
 Auto mode does **not** remove that prompt.
 
-## 6. Test the no-project onboarding path
+## 6. Test the separation of concerns (scaffold vs. GCP)
 
-`gcp_project` is optional — a developer with no GCP project (or no idea what one
-is) must still be able to onboard. To exercise it:
+`/gx-init` is **scaffolding only**; all GCP resolution happens at deploy time in
+`/gx-gcp-deploy` (and read-only in `/gx-sim`).
 
-1. Install (Option B) and **leave the GCP project ID empty** when prompted.
-2. Run `/gx-init` in an app repo and confirm the workmate:
-   - lists your existing projects (`list_projects`) and offers a pick list, or
-   - if the account has none, offers to **create** one (`create_project`) with
-     an ID suggested from the repo name, and
-   - if the account has **no billing account**, points you to
-     `console.cloud.google.com/billing` as the single manual step, then resumes.
-3. Confirm `/gx-gcp-deploy` with no configured project routes through the same
-   resolution instead of failing.
+**6a. Scaffolding works with no GCP (even offline).** In a fresh app repo, run
+`/gx-init` and confirm it:
+- detects the stack, and
+- creates any missing `ABOUT.md`, `ACTION-ITEMS.md`, `BACKLOG.md`, `CHANGELOG.md`,
+  `changes/`, and `qa/QA.md` (leaving existing ones untouched),
+- **without any GCP sign-in, project, or region prompt** — it must not touch GCP.
+
+**6b. No-project resolution happens on deploy.** `gcp_project` is optional.
+Install (Option B) and **leave the GCP project ID empty**. Run `/gx-gcp-deploy`
+(or `/gx-sim`) and confirm the workmate's **Ensure GCP access** step:
+- refreshes your sign-in by opening the browser (never terminal commands), then
+- lists your existing projects (`list_projects`) and offers a pick list, or
+- if the account has none, offers to **create** one (`create_project`) with an ID
+  suggested from the repo name, and
+- if the account has **no billing account**, points you to
+  `console.cloud.google.com/billing` as the single manual step, then resumes.
 
 No "organization" is ever required — personal accounts don't have one.
 
@@ -129,10 +136,12 @@ From a **separate** application repository:
 
 1. `/plugin marketplace add /path/to/gainwix-ai-experience`
 2. `/plugin install gainwix@gainwix-workmates`
-3. `/gx-init` — confirm it detects the stack and validates GCP (or finds/creates
-   a project if none was configured).
-4. `/gx-sim` — confirm it prints a plan and applies nothing.
-5. `/gx-gcp-deploy` — answer at most a couple of questions, approve the gates,
-   and get a live Cloud Run URL plus a `created-deployment.md` in that repo.
+3. `/gx-init` — confirm it scaffolds the dev-workflow files and does **not** touch
+   GCP (no sign-in/project/region prompt).
+4. `/gx-sim` — confirm it resolves GCP access read-only, prints a plan, and applies
+   nothing.
+5. `/gx-gcp-deploy` — confirm it resolves GCP access (sign-in + project + region)
+   itself, then answer at most a couple of questions, approve the gates, and get a
+   live Cloud Run URL plus a `created-deployment.md` in that repo.
 
 Use a sandbox GCP project for the real deploy.

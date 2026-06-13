@@ -8,12 +8,12 @@ You are showing the developer a quick map of the GainWix Cloud Deployment Workma
 
 **GainWix — Cloud Deployment Workmate + dev workflow.** Ship to Google Cloud and run your build/QA pipeline, all from `/gx`.
 
-Deploy:
+Setup & deploy:
 - `/gx` — this orientation.
 - `/gx-help <command>` — deep dive on one command.
-- `/gx-init` — onboard: detect your stack, check GCP access, confirm project/region.
+- `/gx-init` — set up your repo: detect the stack + scaffold the dev-workflow files. No GCP, no deploy.
 - `/gx-sim` — dry run: show the deploy plan (infra + cost + diff) and stop. Never applies.
-- `/gx-gcp-deploy` — the headline: detect → plan → approve → deploy → document. (`/gx-deploy` is an alias.)
+- `/gx-gcp-deploy` — the headline: resolve GCP (sign-in + project) → detect → plan → approve → deploy → document. Owns all GCP setup. (`/gx-deploy` is an alias.)
 
 Build & ship (changes → PR + change record):
 - `/gx-go` — run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record.
@@ -37,4 +37,4 @@ Hygiene:
 Coming soon:
 - `/gx-add`, `/gx-rm` — add/remove connectors or MCPs. · `/gx-reset` — reset config. · `/gx-debug` — diagnostics.
 
-Deploy path: `/gx-init` → `/gx-sim` → `/gx-gcp-deploy`. Dev path: `/gx-issue-add` → `/gx-issue-pick` → `/gx-next` → `/gx-go` (or `/gx-sing`).
+Set up once with `/gx-init`. Deploy path: `/gx-sim` → `/gx-gcp-deploy` (it handles GCP sign-in + project for you). Dev path: `/gx-issue-add` → `/gx-issue-pick` → `/gx-next` → `/gx-go` (or `/gx-sing`).

@@ -40,7 +40,7 @@ Claude Code prompts you for:
 
 | Setting | Required | Notes |
 | :------ | :------- | :---- |
-| **GCP project ID** | no | The project to deploy into. Leave empty if you don't have one yet — `/gx-init` will find or create one for you. |
+| **GCP project ID** | no | The project to deploy into. Leave empty if you don't have one yet — `/gx-gcp-deploy` will find or create one for you when you deploy. |
 | **GCP region** | no | Defaults to `us-central1`. |
 | **Service account key** | no | Path to a JSON key. Leave empty to use your local `gcloud` Application Default Credentials. |
 | **Trust mode** | no | `suggest` (default, every gate interactive) or `auto` (Gate 1 may auto-approve; production never does). |
@@ -51,7 +51,7 @@ The Cloud Run MCP is provisioned automatically from these values — there is no
 
 - **Node.js** (the Cloud Run MCP runs via `npx`; the production gate runs via `node`).
 - **gcloud CLI** installed (unless you supplied a service-account key). You don't need to sign in ahead of time — if your Google sign-in is missing or expired, the workmate refreshes it for you; your only step is approving access in the browser window it opens.
-- **A Google Cloud billing account.** You do **not** need a GCP project (`/gx-init` creates one) or an organization (personal accounts don't have one). But Cloud Run requires billing, and adding a billing account (a card) is the one step only you can do, at <https://console.cloud.google.com/billing>. It's the single console visit this plugin will ever ask of you.
+- **A Google Cloud billing account.** You do **not** need a GCP project (`/gx-gcp-deploy` creates one) or an organization (personal accounts don't have one). But Cloud Run requires billing, and adding a billing account (a card) is the one step only you can do, at <https://console.cloud.google.com/billing>. It's the single console visit this plugin will ever ask of you.
 
 Authentication uses your own credentials under least privilege — nothing is hardcoded.
 
@@ -61,9 +61,9 @@ Authentication uses your own credentials under least privilege — nothing is ha
 
 ```
 /gx                 # one-line map of every command
-/gx-init            # onboard: detect stack, validate GCP access, pick/create a project
+/gx-init            # set up the repo: detect stack + scaffold the dev-workflow files (no GCP, no deploy)
 /gx-sim             # dry run: show the deploy plan (infra + cost + diff), then stop
-/gx-gcp-deploy      # the headline: detect → plan → approve → deploy → document
+/gx-gcp-deploy      # the headline: resolve GCP (sign-in + project) → detect → plan → approve → deploy → document
 /gx-help <command>  # deep dive on any command
 ```
 
@@ -71,14 +71,17 @@ Authentication uses your own credentials under least privilege — nothing is ha
 
 ### What a deploy does
 
+A condensed view — `/gx-help gx-gcp-deploy` (and [`agents/deployment-workmate.md`](agents/deployment-workmate.md)) have the authoritative step-by-step.
+
 1. **Pre-flight git hygiene** — clean tree, merge to `main`, cut a release branch (confirmed with you first).
-2. **Detect & classify** — your language/framework/runtime/port/env, and whether this is production.
-3. **Plan** — the GCP infra needed (Cloud Run first; flags any database/networking/IAM), an estimated monthly cost, and the diff from what's already deployed.
-4. **Ask the minimum** — at most 2–3 questions, recommended option pre-selected.
-5. **Gate 1 — plan approval** — nothing is applied until you approve.
-6. **Execute** — provisions and deploys through the Cloud Run MCP. No console, ever.
-7. **Gate 2 — production promotion** — a mandatory human approval, enforced by a hook even in Auto mode.
-8. **Artifact** — writes `created-deployment.md`: every resource, the live URL(s), how to roll back, how to scale.
+2. **Ensure GCP access** — resolves sign-in + project + region for you (browser approval only; never terminal commands). This command owns GCP setup, not `/gx-init`.
+3. **Detect & classify** — your language/framework/runtime/port/env, and whether this is production.
+4. **Plan** — the GCP infra needed (Cloud Run first; flags any database/networking/IAM), an estimated monthly cost, and the diff from what's already deployed.
+5. **Ask the minimum** — at most 2–3 questions, recommended option pre-selected.
+6. **Gate 1 — plan approval** — nothing is applied until you approve.
+7. **Execute** — provisions and deploys through the Cloud Run MCP. No console, ever.
+8. **Gate 2 — production promotion** — a mandatory human approval, enforced by a hook even in Auto mode.
+9. **Artifact** — writes `created-deployment.md`: every resource, the live URL(s), how to roll back, how to scale.
 
 Monitoring is intentionally **out of scope** for this build (the artifact leaves a marked `TODO`).
 
@@ -97,9 +100,9 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | :------ | :----- | :------ |
 | `/gx` | ✅ | One-line orientation. |
 | `/gx-help <cmd>` | ✅ | Deep dive on one command. |
-| `/gx-init` | ✅ | Onboard: detect stack, validate GCP, pick or create a project. |
+| `/gx-init` | ✅ | Set up the repo: detect stack + scaffold the dev-workflow files. No GCP, no deploy. |
 | `/gx-sim` | ✅ | Dry-run plan (Gate 1 in isolation). Never applies. |
-| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow. |
+| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — owns GCP access (sign-in + project + region). |
 
 **Dev workflow** (ported from the AptonWorks dev pipeline — assume a `develop` trunk + the `ACTION-ITEMS.md`/`BACKLOG.md`/`changes/`/`qa/` conventions)
 
