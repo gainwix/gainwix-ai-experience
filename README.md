@@ -91,6 +91,8 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 
 ## Command reference
 
+**Deploy**
+
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
 | `/gx` | ✅ | One-line orientation. |
@@ -98,10 +100,29 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | `/gx-init` | ✅ | Onboard: detect stack, validate GCP, pick or create a project. |
 | `/gx-sim` | ✅ | Dry-run plan (Gate 1 in isolation). Never applies. |
 | `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow. |
+
+**Dev workflow** (ported from the AptonWorks dev pipeline — assume a `develop` trunk + the `ACTION-ITEMS.md`/`BACKLOG.md`/`changes/`/`qa/` conventions)
+
+| Command | Status | Purpose |
+| :------ | :----- | :------ |
+| `/gx-go` | ✅ | Run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record. |
+| `/gx-next` | ✅ | Plan the top `ACTION-ITEMS.md` idea into a `BACKLOG.md` task. |
+| `/gx-sing` | ✅ | Serial loop: plan one + ship one until both queues drain. |
+| `/gx-ping` | ✅ | Parallel loop: conflict-free batch (worktree per item), serial merges. |
+| `/gx-qa` | ✅ | End-to-end browser + API QA → screenshotted report. |
+| `/gx-qbugs` | ✅ | File the latest QA run's failures as bug issues + fix tasks. |
+| `/gx-qloop` | ✅ | qa → qbugs → ping until the suite is green. |
+| `/gx-issue-add <text>` | ✅ | File a GitHub issue tagged `queued`. |
+| `/gx-issue-list` | ✅ | View the `queued` queue, oldest-first (read-only). |
+| `/gx-issue-pick` | ✅ | Dequeue oldest `queued` issues into `ACTION-ITEMS.md`. |
+| `/gx-sweep` | ✅ | Prune old QA reports + merged branches. |
+
+**Coming soon**
+
+| Command | Status | Purpose |
+| :------ | :----- | :------ |
 | `/gx-add`, `/gx-rm` | 🚧 | Add/remove connectors or MCPs. |
 | `/gx-reset` | 🚧 | Reset plugin configuration. |
-| `/gx-issue add\|list\|rm` | 🚧 | Work/issue tracking. |
-| `/gx-next`, `/gx-go` | 🚧 | Workflow drivers. |
 | `/gx-debug` | 🚧 | Diagnostics. |
 
 🚧 = declared and discoverable, behavior coming in a later build.
