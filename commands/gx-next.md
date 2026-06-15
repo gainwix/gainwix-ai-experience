@@ -75,7 +75,7 @@ whole thing as one item. Shape:
   - **Goal:** <the operator-visible end state>
   - **Steps:** <concrete, numbered — name the files / models / migrations /
     endpoints; 1–3 PRs' worth of work>
-  - **Done:** <done-criteria; for Rails changes: `bin/rails test` green + `bin/rubocop` clean>
+  - **Done:** <done-criteria — e.g. the project's test suite green + linter clean (per `BACKLOG.md`'s autonomy preamble)>
   - **Tracks:** <if the raw item references a GitHub issue, carry it forward as
     **`Tracks #<N>`** + the `[#<N>](<url>)` link. This is the KANBAN issue
     (`queued`→`WIP`→`DONE`) — `/gx-go` opens a SUBORDINATE issue under #<N> and its PR

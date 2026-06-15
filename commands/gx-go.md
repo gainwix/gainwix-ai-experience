@@ -99,15 +99,16 @@ Run the project's standard one-PR-per-change workflow (one git worktree per
 session — see CLAUDE.md; never edit the shared main checkout). Typically:
 
 1. From a fresh branch off `origin/develop`, implement the task.
-2. Run the test suite where appropriate (`cd railsaptonaiapi && bin/rails test`);
-   only when the change touches Rails code. A full `bin/rails test` regenerates
-   **`railsaptonaiapi/COVERAGE.md`** (via `test/coverage_markdown_formatter.rb`) —
-   when it changes, **stage and commit it as part of this task's PR** so the
-   committed coverage report stays current (never leave it as a stray
-   uncommitted file). Keep coverage **≥ 95%**: if your change drops it below
-   that, add tests before shipping.
+2. Run the project's test suite where appropriate (the exact command is declared
+   in `BACKLOG.md`'s autonomy preamble — e.g. `npm test`, `bin/rails test`,
+   `pytest`, `go test ./...`, `make check`), only when the change touches code the
+   suite covers. If your project regenerates a coverage report as part of the test
+   run, **stage and commit it as part of this task's PR** so the committed report
+   stays current (never leave it as a stray uncommitted file), and hold coverage at
+   or above the project's threshold — if your change drops it below, add tests
+   before shipping.
 3. Commit with a descriptive message ending in the standard `Co-Authored-By`
-   footer (include the refreshed `railsaptonaiapi/COVERAGE.md` when the suite ran).
+   footer (include any refreshed coverage report when the suite ran).
 4. Push the branch.
 5. Open a GH issue describing the change (best-effort — if blocked, note it in
    the timeline and continue). **`/gx-go` ALWAYS opens its OWN new issue for the
@@ -272,7 +273,8 @@ and the elapsed time. Mention that the run was recorded to the change file
   preamble). Never touch `ACTION-ITEMS.md` in either mode.
 - **Markdown, not HTML** — change files are plain GitHub-Flavored Markdown so
   they render inline on GitHub. Don't use raw HTML/CSS; keep it portable.
-- **Coverage report travels with the change.** When the run executed
-  `bin/rails test`, the regenerated `railsaptonaiapi/COVERAGE.md` is part of the
-  task's PR (committed alongside the code + the change file), and coverage stays
-  ≥ 95%. Never ship a Rails change leaving `COVERAGE.md` uncommitted/stale.
+- **Coverage report travels with the change.** If running the test suite
+  regenerates a coverage report, that report is part of the task's PR (committed
+  alongside the code + the change file), and coverage stays at or above the
+  project's threshold. Never ship a change leaving a regenerated coverage report
+  uncommitted/stale.

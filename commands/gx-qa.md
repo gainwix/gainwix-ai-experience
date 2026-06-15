@@ -1,17 +1,17 @@
 ---
-description: End-to-end QA — boot the stack (railsaptonaiapi :3000 on an isolated seeded QA DB + webaptonai :5173), run every workflow in qa/QA.md through Playwright/chromium, capture per-step screenshots, emit a self-contained paginated qa/RUN-REPORT-<ts>.html with linked screenshots + highlighted located errors, prepend qa/RUN-LOG.md, then triage failures (root-cause WHERE — frontend vs backend). OPERATIONAL: commits the qa/ artifacts to develop; NOT a /gx-go change (no changes/*.md, no CHANGELOG entry). Aborts cleanly when qa/QA.md has no workflows.
+description: End-to-end QA — boot your stack (frontend + backend) against an isolated, freshly seeded test database (per qa/QA.md's Environment/setup section), run every workflow in qa/QA.md through Playwright/chromium, capture per-step screenshots, emit a self-contained paginated qa/RUN-REPORT-<ts>.html with linked screenshots + highlighted located errors, prepend qa/RUN-LOG.md, then triage failures (root-cause WHERE — frontend vs backend). OPERATIONAL: commits the qa/ artifacts to develop; NOT a /gx-go change (no changes/*.md, no CHANGELOG entry). Aborts cleanly when qa/QA.md has no workflows.
 disable-model-invocation: true
 ---
 
 # /gx-qa — end-to-end QA run (browser + API), reported with screenshots
 
-`/gx-qa` drives complete user journeys across BOTH tiers of the stack — the
-`webaptonai` React SPA and the `railsaptonaiapi` JSON backend — through a real
+`/gx-qa` drives complete user journeys across BOTH tiers of your stack — the
+frontend (web UI) and the backend (API / system of record) — through a real
 browser (Playwright / chromium), captures a screenshot at every meaningful step,
 and emits a shareable, self-contained HTML report plus a newest-first run log. It
 is the cross-tier complement to the per-tier unit/integration suites: it catches
-integration breaks (CSRF/cookie/proxy, serializer drift, route gaps, broken
-pages) that isolated tests miss.
+integration breaks (auth/cookie/CSRF/proxy, serializer or contract drift, route
+gaps, broken pages) that isolated tests miss.
 
 A `/gx-qa` **run is OPERATIONAL, like `/gx-sweep`** — it commits the small `qa/`
 artifacts (the new `RUN-REPORT-<ts>.html`, its machine-readable
@@ -60,12 +60,13 @@ note in the summary. The runner logs which group/mode each workflow ran in.
   deterministic core — it parses `qa/QA.md`, drives chromium through each
   workflow, screenshots, generates the report, and updates `RUN-LOG.md`. It is
   runnable by a human or CI with no Claude involvement.
-- **This command** is the Claude-facing wrapper: it boots both servers against an
-  isolated seeded QA DB, invokes the runner, then **triages** the results —
-  root-causing each failure and stating WHERE it lives (workflow step / SPA route
-  / component / API endpoint + HTTP status, frontend vs backend) — and prints the
-  roll-up. The runner already records a located error in the report; Claude's
-  value-add is the human explanation + next step.
+- **This command** is the Claude-facing wrapper: it boots your stack against an
+  isolated, seeded test database (per `qa/QA.md`'s Environment/setup section),
+  invokes the runner, then **triages** the results — root-causing each failure and
+  stating WHERE it lives (workflow step / frontend route / component / API
+  endpoint + HTTP status, frontend vs backend) — and prints the roll-up. The
+  runner already records a located error in the report; Claude's value-add is the
+  human explanation + next step.
 
 ## Abort cleanly when there are no workflows
 
@@ -77,89 +78,59 @@ non-zero with that message when the parse yields zero workflows.)
 
 ## Step 1 — Prerequisites (one-time per machine, then reuse)
 
-The runner resolves Playwright from `webaptonai/node_modules`, so that app's deps
-+ the chromium browser must be present:
+The runner needs **Playwright + the chromium browser** available. Install them
+wherever your project keeps the runner's Node deps (commonly the frontend app's
+`node_modules`, or `qa/runner/` itself — whatever your `qa/QA.md` setup section
+documents):
 
 ```bash
-cd webaptonai
-npm ci                              # node_modules is gitignored
+# from whichever package owns the runner's deps (adjust the path to your repo)
+npm ci                              # install deps (node_modules is gitignored)
 npx playwright install chromium     # downloads the browser (needs network)
 ```
 
 If chromium cannot download (offline/blocked), `/gx-qa` cannot do a live browser run
 — say so and stop; do not fake screenshots.
 
-## Step 2 — Boot the stack on a freshly RESET, isolated, seeded QA DB
+## Step 2 — Boot the stack on a freshly RESET, isolated, seeded test DB
 
-Never run QA against a developer's dev data. Use a dedicated DB suffix
-(`APTON_TEST_DB_SUFFIX=_qa`) and seed it with throwaway `APTON_AI_DEV_*` values.
+**Never run QA against real or dev data.** Boot your stack against a **dedicated,
+isolated test database** seeded with **throwaway** credentials — exactly as
+documented in your repo's **`qa/QA.md` → "Environment / setup"** section. That
+section is where the per-project boot lives (the reset/seed commands, the ports,
+any tokens); this recipe stays stack-agnostic and just *follows* it.
 
-**RESET the QA database every run — drop + recreate + reseed, not just
-`db:prepare`.** The suite includes MUTATING workflows (the reviewer approves a
-review: PREVIEW→REVIEWED; the approver approves & publishes: SUBMITTED→LIVE; the
-org admin onboards the Frontend OU). Onboarding is one-way and a mutated course
-does not return to its mid-lifecycle state on its own, so a plain idempotent
-`db:prepare`/`db:seed` would leave those records advanced after the first run and
-the mutation workflows would no longer find their actionable seed (e.g. "Cowork
-Patterns" would no longer be in PREVIEW). Dropping + recreating + reseeding the
-isolated `_qa` DB each run returns the seeded mid-lifecycle courses to
-PREVIEW/SUBMITTED and the Frontend OU to un-onboarded, so the reviewer/approver/
-onboard workflows are **deterministic and repeatable** on every `/gx-qa` run. The
-`_qa` suffix keeps this reset confined to the throwaway QA DB — it never touches
-dev/test data.
+**RESET the test database every run — drop + recreate + reseed, not just a
+migrate/prepare.** A QA suite typically includes **mutating** workflows (an
+approval that advances a record's status, an onboarding that's one-way, etc.).
+Those mutations don't undo themselves, so an idempotent migrate/seed would leave
+records advanced after the first run and the mutating workflows would no longer
+find their actionable seed state (e.g. an item that should still be "pending review"
+would already be "published"). Dropping + recreating + reseeding an **isolated**
+test DB each run returns all seeded mid-lifecycle state to its initial state, so
+every workflow is **deterministic and repeatable**. Keep the reset confined to the
+throwaway test DB — it must **never** touch dev/prod data.
 
-```bash
-# 2a. RESET + seed the isolated QA database (drop → recreate → load → seed).
-#     `db:reset` = db:drop + db:setup (recreate from structure.sql) + db:seed,
-#     so it returns ALL seeded state (mid-lifecycle courses, OU onboarding) to
-#     its initial state every run. Run under RAILS_ENV=test so the suffix applies.
-cd railsaptonaiapi
-RAILS_ENV=test APTON_TEST_DB_SUFFIX=_qa \
-  APTON_AI_DEV_USER_PASSWORD=<throwaway-qa-pw> \
-  APTON_SUPERADMIN_EMAIL=qa@example.com \
-  APTON_SUPERADMIN_PASSWD=<throwaway-qa-pw> \
-  bin/rails db:reset
-# (Equivalent if db:reset is unavailable for the multi-DB layout:
-#   RAILS_ENV=test APTON_TEST_DB_SUFFIX=_qa bin/rails db:drop db:prepare
-#   then re-run the seed with the APTON_AI_DEV_* / APTON_SUPERADMIN_* env above:
-#   ... APTON_AI_DEV_USER_PASSWORD=... bin/rails db:seed )
+Following your `qa/QA.md` setup section, in order:
 
-# 2b. Boot the API on :3000 against the QA DB (background).
-APTON_TEST_DB_SUFFIX=_qa bin/rails server -p 3000 &
+1. **Reset + seed** the isolated test DB (drop → recreate → load schema → seed)
+   with throwaway placeholder secrets.
+2. **Boot the backend** (API) on its port, pointed at the test DB (background).
+3. **Boot the frontend** on its port (background). If the frontend proxies the API,
+   note which paths it forwards — api-mode workflows that bypass the proxy hit the
+   API origin directly via `QA_API_BASE` (Step 3).
 
-# 2c. Boot the SPA on :5173 (its /spa proxy targets the API on :3000) (background).
-#     (Browser workflows use :5173; api workflows hit the API origin :3000 directly
-#     via QA_API_BASE — the SPA proxy forwards /spa but not /api.)
-cd ../webaptonai && npm run dev &
-```
+**(api-mode workflows only)** If any workflow is `Mode: api`, resolve whatever its
+Bearer/API surface needs against the **same** isolated test DB — typically mint an
+API token for a seeded user (and read any required record id), then `export` them
+so the run is deterministic and the token is fetched once. The runner can also mint
+a token itself via `QA_TOKEN_MINT_CMD` (Step 3). Any such token is a **SECRET** —
+keep it in the shell env only; never echo it, write it to a report, or commit it.
 
-**2d. (api-mode workflows only) Resolve the learner Bearer token + the live quiz
-id** for the `Mode: api` learner-journey workflows (GROUP 8 in `qa/QA.md`), against
-the SAME isolated `_qa` DB. The runner can mint the token itself (it shells out to
-`bin/rails runner` when `QA_API_TOKEN` is unset), but doing it here lets you export
-both as env so the run is fully deterministic and the token is fetched ONCE:
-
-```bash
-# From railsaptonaiapi/. Mint a Bearer token for the seeded learner + read the
-# live course's LIVE quiz id. Capture into shell vars (NOT written to the repo).
-cd railsaptonaiapi
-QA_API_TOKEN=$(RAILS_ENV=test APTON_TEST_DB_SUFFIX=_qa bin/rails runner \
-  'print User.find_by!(email: "learner@demo.aptonworks.com").api_tokens.create!.plaintext')
-QA_LIVE_QUIZ_ID=$(RAILS_ENV=test APTON_TEST_DB_SUFFIX=_qa bin/rails runner \
-  'print Training::Quiz.live.api_served.first&.id')
-export QA_API_TOKEN QA_LIVE_QUIZ_ID
-```
-
-The Bearer token is a SECRET — keep it in the shell env only; never echo it, write
-it to a report, or commit it (the runner upholds this too: it never logs the token).
-If you skip 2d, the runner auto-mints the token, but `${QA_LIVE_QUIZ_ID}` stays
-unset and the quiz-attempt step in the full-journey workflow will 404/fail (by
-design — it flags the missing id).
-
-Use **throwaway placeholder** secrets only (e.g. a `qa-throwaway-pw`-style dummy)
+Use **throwaway placeholder** secrets only (a dummy `qa-throwaway-pw`-style value)
 — never real credentials, and never write cleartext real secrets into the repo or
-a report (honor the no-cleartext-secrets rule). Wait until both ports answer
-(poll `http://localhost:5173/` and `http://localhost:3000/up`) before running.
+a report (honor the no-cleartext-secrets rule). Wait until both ports answer (poll
+the frontend URL and the backend health endpoint) before running.
 
 ## Step 3 — Run the runner
 
@@ -169,39 +140,38 @@ parallel pool with `QA_CONCURRENCY`, or widen the per-step timeout with
 `${VAR}` substitution (below) resolves to the seeded credentials:
 
 ```bash
-NODE_PATH=webaptonai/node_modules \
+NODE_PATH=<path-to-the-runner's-node_modules> \
   QA_CONCURRENCY=2 \
-  APTON_AI_DEV_USER_PASSWORD=<throwaway-qa-pw> \
-  APTON_SUPERADMIN_EMAIL=qa@example.com \
-  APTON_SUPERADMIN_PASSWD=<throwaway-qa-pw> \
-  QA_API_BASE=http://localhost:3000 \
+  MY_APP_USER_PASSWORD=<throwaway-qa-pw> \
+  MY_APP_ADMIN_EMAIL=qa@example.com \
+  QA_API_BASE=<backend-origin, only if api-mode workflows exist> \
   QA_API_TOKEN="$QA_API_TOKEN" \
-  QA_LIVE_QUIZ_ID="$QA_LIVE_QUIZ_ID" \
-  node qa/runner/run.mjs --base http://localhost:5173
+  node qa/runner/run.mjs --base <frontend-url>
 ```
 
-**API-mode workflows (`Mode: api`, GROUP 8).** These run with NO browser — the
-runner drives the Bearer `/api/v1` delivery surface with `fetch` and records JSON
-snapshots (no screenshots). They authenticate with the learner Bearer token from
-`QA_API_TOKEN` (exported in Step 2d) — or, if that's unset, the runner mints one by
-shelling out to `bin/rails runner` against the `_qa` DB (`QA_LEARNER_EMAIL`, default
-`learner@demo.aptonworks.com`; whole command overridable via `QA_TOKEN_MINT_CMD`).
-The token rides only in the `Authorization` header and is NEVER logged. Because the
-SPA's Vite proxy forwards `/spa` but **not** `/api`, api workflows hit the Rails API
-**origin directly** via `QA_API_BASE` (`http://localhost:3000`, or `--api-base`),
-NOT through `:5173` — the Bearer API needs no cookie/CSRF/same-origin handling.
-Validate the api machinery offline (no servers) with
-`node qa/runner/validate-api-mode.mjs` (stands up an in-process mock `/api/v1`).
+Replace the `MY_APP_*` names with whatever `${VAR}` tokens your `qa/QA.md` workflows
+reference (see the substitution section below), and the `<…>` placeholders with your
+runner's `node_modules` path, frontend URL, and (if needed) backend origin.
+
+**API-mode workflows (`Mode: api`).** These run with NO browser — the runner drives
+your API surface with `fetch` and records JSON snapshots (no screenshots). They
+authenticate with a Bearer token from `QA_API_TOKEN` (exported in Step 2) — or, if
+unset, the runner mints one via the command in **`QA_TOKEN_MINT_CMD`** (set this to
+your project's token-minting command; `QA_LEARNER_EMAIL` names the seeded user when
+that command reads it). The token rides only in the `Authorization` header and is
+NEVER logged. If your frontend proxies only some paths (not the API), api workflows
+hit the **API origin directly** via `QA_API_BASE` (or `--api-base`), bypassing the
+proxy — a Bearer API needs no cookie/CSRF/same-origin handling.
 
 **Per-step timeout (`QA_TIMEOUT`, default `35000`ms):** each Playwright step
 (`waitFor` / `click` / `fill` / `goto` / `networkidle`) is bounded by this
 timeout (override via `QA_TIMEOUT=<ms>` or `--timeout <ms>`). The default is a
-roomy 35s because the dev stack (Vite dev server + test-env Rails) slows down
+roomy 35s because a dev stack (dev servers + a test-mode backend) can slow down
 measurably over a long (30+ workflow) run, so the heaviest serial steps late in
 the run — typically a login/queue click — would intermittently exceed a tighter
 budget and false-fail even when run `serial` (a dev-stack-degradation artifact,
-not parallel contention). Raise it further against a slow CI box; lower it
-against a fast production `vite preview` build.
+not parallel contention). Raise it further against a slow CI box; lower it against
+a fast production-style build.
 
 ### `${VAR}` / `${RUN_TS}` substitution in step args (secret-safe)
 
@@ -211,15 +181,16 @@ step-execution time**:
 
 - `${RUN_TS}` → the run's timestamp (e.g. `qa-signup-${RUN_TS}@example.com` mints a
   unique signup email each run).
-- `${ANY_ENV}` → `process.env.ANY_ENV` (e.g. `${APTON_AI_DEV_USER_PASSWORD}`,
-  `${APTON_SUPERADMIN_EMAIL}`, `${APTON_SUPERADMIN_PASSWD}`). An unset var resolves
-  to `""` plus a one-line stderr warning that names **only the var** (never a value).
+- `${ANY_ENV}` → `process.env.ANY_ENV` (e.g. `${MY_APP_USER_PASSWORD}`,
+  `${MY_APP_ADMIN_EMAIL}` — whatever names your workflows use). An unset var
+  resolves to `""` plus a one-line stderr warning that names **only the var**
+  (never a value).
 
 **Secret safety (do not regress):** the resolved value is passed **only** to
 Playwright's `fill`/`goto`. It is **never** written to the report, `RUN-LOG.md`, a
 screenshot filename, or stdout/stderr — a `fill` step's report label shows only its
 **selector** (not the value), and password inputs render masked in screenshots.
-That is why the workflow files reference `${APTON_…}` tokens instead of plaintext
+That is why the workflow files reference `${…}` env tokens instead of plaintext
 secrets, and why you export those env vars (matching the seeded creds) before this
 step.
 
@@ -249,12 +220,12 @@ share one base name.
 ## Step 4 — Triage (Claude's role)
 
 Open the report / read the runner's stderr. For each **failed** workflow:
-- **Root-cause it** and state WHERE: which workflow step, which SPA route, which
+- **Root-cause it** and state WHERE: which workflow step, which frontend route, which
   component, and — when a request failed — which API endpoint + HTTP status.
-- **Attribute frontend vs backend.** A 4xx/5xx on a `/spa/**` call → backend
+- **Attribute frontend vs backend.** A 4xx/5xx on an API call → backend
   (serializer/route/auth/CSRF). A page that mounts but a selector never appears,
-  with no failing request → frontend (route/component/render). A redirect to
-  `/login` on an authenticated route → session/cookie/guard wiring.
+  with no failing request → frontend (route/component/render). A redirect to the
+  login route on an authenticated page → session/cookie/guard wiring.
 - The runner already embeds a located error block in the report; add the human
   explanation + the likely fix in your roll-up.
 
@@ -320,9 +291,9 @@ done
 
 ## Step 6 — Tear down
 
-Stop the background servers you started (the API on :3000 and the SPA on :5173).
-The `_qa` database can be left for the next run (re-seeding is idempotent) or
-dropped with `APTON_TEST_DB_SUFFIX=_qa bin/rails db:drop`.
+Stop the background servers you started (the frontend and the backend). The
+isolated test database can be left for the next run (the reset re-seeds it from
+scratch) or dropped — whichever your `qa/QA.md` setup section specifies.
 
 ## Step 7 — Print the roll-up
 
@@ -330,7 +301,7 @@ Print: workflows run, pass/fail counts, the report path
 (`qa/RUN-REPORT-<ts>.html`) + its `qa/RUN-REPORT-<ts>.json` sidecar +
 `RUN-LOG.md` link, and — for any failure — the located root cause (step / route /
 component / endpoint+status, frontend vs backend). Mention the run was committed
-to `develop` as an operational `/gx-qa` run (no `changes/*.md`, no CHANGELOG entry).
+to develop as an operational `/gx-qa` run (no `changes/*.md`, no CHANGELOG entry).
 On a **green** run, also report the kanban sweep from Step 5b: which `WIP` issues
 advanced to `DONE` (all subordinates closed) and which stayed `WIP` (subordinates
 still open). If there were failures, suggest running **`/gx-qbugs`** to file them as

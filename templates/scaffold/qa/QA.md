@@ -21,10 +21,19 @@ document order, and **never removes them** (unlike `BACKLOG.md`, whose items
 (concurrently, each in its own isolated browser context), then the serial group
 one-at-a-time in document order.
 
-**Environment / setup.** Document here how to boot your stack against an
-**isolated, freshly seeded** test database (never a developer's real data), and
-which ports the frontend/back end listen on. The runner under `qa/runner/`
-automates this.
+**Environment / setup.** This is the **single place** your per-project QA boot
+lives — `/gx-qa` reads this section and follows it, so the command itself stays
+stack-agnostic. Document, for your stack, how to:
+
+- **Reset + seed** an **isolated** test database (drop → recreate → load schema →
+  seed) with **throwaway** placeholder secrets — never real/dev data; reset every
+  run so mutating workflows stay deterministic.
+- **Boot the backend** (API) — the command + its port, pointed at the test DB.
+- **Boot the frontend** — the command + its port (note any API paths it proxies).
+- **(api-mode workflows only)** mint an API token for a seeded user (+ any record
+  ids those workflows need), or set `QA_TOKEN_MINT_CMD` so the runner mints one.
+
+The runner under `qa/runner/` automates the drive; you supply the boot above.
 
 > **Runner required.** `/gx-qa` drives a Playwright/chromium runner expected at
 > `qa/runner/` (`run.mjs` + report generator). `/gx-init` scaffolds this `qa/QA.md`

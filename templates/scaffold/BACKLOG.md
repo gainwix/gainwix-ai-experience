@@ -42,7 +42,8 @@ further prompting. That includes:
   and cleaning up local + remote branches.
 
 > Tune this preamble to your repo: set the trunk branch and the exact
-> build/test/lint commands (e.g. `npm test`, `bin/rails test`, `make check`).
+> build/test/lint commands for your stack (e.g. `npm test`, `pytest`,
+> `go test ./...`, `bin/rails test`, `make check`).
 
 ----------------------------------------------------------------
 

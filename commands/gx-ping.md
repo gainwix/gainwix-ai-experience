@@ -27,10 +27,10 @@ Parallelism here is bounded by real constraints — be honest about them every r
   (`config/routes.rb`, the layouts, shared Beacon CSS/partials), so the
   genuinely-parallel batch is often **smaller than 5 — sometimes 1**. That's
   expected; when it's 1, `/gx-ping` just does that one item (like `/gx-sing`).
-- **At most one migration per batch.** Migrations are sequentially numbered
-  (`railsaptonaiapi/db/README.md`): two worktrees adding a migration in parallel
-  grab the same number and collide. **No batch may contain more than one
-  migration-adding item.**
+- **At most one schema/migration change per batch.** If your project numbers
+  migrations sequentially (or otherwise versions a single schema file), two
+  worktrees adding one in parallel can grab the same number/version and collide.
+  **No batch may contain more than one migration-adding item.**
 - **No intra-batch dependencies.** If item B builds on item A (A must ship
   first), they can't be in the same batch.
 
@@ -65,8 +65,9 @@ Parallelism here is bounded by real constraints — be honest about them every r
    prefer the **Workflow tool** with `isolation: 'worktree'` (each agent gets a
    fresh worktree off the latest `origin/develop`); parallel `Agent` calls in a
    single message are an acceptable alternative. Each team runs its item's `/gx-go`
-   **implementation** only: branch → implement → `cd railsaptonaiapi && bin/rails test`
-   green (+ refresh `COVERAGE.md`, keep ≥ 95%) → `bin/rubocop` → commit (dequeue
+   **implementation** only: branch → implement → run the project's test + lint
+   commands green (per `BACKLOG.md`'s autonomy preamble; refresh any coverage
+   report) → commit (dequeue
    its `BACKLOG.md` task in the commit) → push its branch → open its PR. **Each
    team STOPS before merging** — merging is the serial step below. One PR +
    one `changes/<ts>-change.md` per item, exactly as `/gx-go` produces.
