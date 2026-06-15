@@ -13,8 +13,8 @@ Run the **deployment-workmate** onboarding playbook **in this conversation** for
 Run the **onboarding flow** only — do NOT deploy, do NOT authenticate to GCP, and do NOT write `.gainwix/deploy-context.json`.
 
 1. Inspect the repo and detect the stack: language, framework, runtime, build method, port, env vars (for context — no cloud calls).
-2. **Scaffold the dev workflow** (your "Scaffold the dev workflow" onboarding step): create any missing `ABOUT.md`, `ACTION-ITEMS.md`, `BACKLOG.md`, `CHANGELOG.md`, `changes/`, and `qa/QA.md` from `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/` so the `/gx-go`/`/gx-next`/`/gx-qa` commands have what they need. **Never overwrite a file I already have.** Tell me what you created vs. what existed, that `ABOUT.md` + `qa/QA.md` are mine to fill in, and that `/gx-qa` still needs a `qa/runner/` harness. Confirm my trunk branch (the scaffold assumes `develop`).
+2. **Scaffold the dev workflow** (your "Scaffold the dev workflow" onboarding step): create any missing `ABOUT.md`, `ACTION-ITEMS.md`, `BACKLOG.md`, `CHANGELOG.md`, `changes/`, and `qa/QA.md` from `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/` so the `/gx-go`/`/gx-next`/`/gx-qa` commands have what they need. **Never overwrite a file I already have.** Tell me what you created vs. what existed, that `qa/QA.md` is mine to fill in (and `/gx-qa` still needs a `qa/runner/` harness), and that **`/gx-about` will fill in `ABOUT.md` and seed `ACTION-ITEMS.md`** for me next. Confirm my trunk branch (the scaffold assumes `develop`).
 3. Flag (don't fix) anything else worth knowing for a clean deploy later — e.g. a missing Dockerfile (note that buildpacks can handle it at deploy time).
-4. Finish with a one-line "your repo's set up — run /gx-gcp-deploy to ship (it handles GCP sign-in + project for you), or /gx-issue-add … to start the dev workflow."
+4. Finish with a one-line "your repo's scaffolded — run `/gx-about` next to fill in ABOUT.md + seed your backlog, then `/gx-next`/`/gx-go` to build (or `/gx-gcp-deploy` when you're ready to ship)."
 
 Keep it plain-spoken. I'm an app developer, not a platform engineer.

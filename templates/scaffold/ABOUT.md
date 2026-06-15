@@ -1,7 +1,8 @@
 # <Project name> — Product Overview
 
-> Scaffolded by `/gx-init`. Replace every `<placeholder>` with your project's real
-> details and delete the guidance notes. This file is the **single source of
+> Scaffolded by `/gx-init`. **Run `/gx-about` to fill this in by interview** (it drafts
+> from a repo scan and asks you the rest), or replace every `<placeholder>` by hand —
+> either way, delete the guidance notes when done. This file is the **single source of
 > truth** for what the product is and why it exists — the dev-workflow commands
 > read it for context, and the closing prompt turns it into the seed for your
 > backlog. Keep the section structure; fill it in.
@@ -110,5 +111,6 @@ subsection per role.>
 > Group features into epics aligned to the components and workflows, and order
 > them so foundational capabilities (auth, core entities/roles, the central data
 > model) come before the workflows that depend on them. The output should be
-> complete enough to seed `ACTION-ITEMS.md` / `BACKLOG.md` for the GainWix dev
-> workflow (`/gx-next` → `/gx-go`).
+> complete enough to seed `ACTION-ITEMS.md` for the GainWix dev workflow.
+> (`/gx-about` runs this prompt for you and writes the distilled result into
+> `ACTION-ITEMS.md`; then `/gx-next` → `/gx-go` plan and ship each item.)

@@ -138,9 +138,11 @@ From a **separate** application repository:
 2. `/plugin install gainwix@gainwix-workmates`
 3. `/gx-init` — confirm it scaffolds the dev-workflow files and does **not** touch
    GCP (no sign-in/project/region prompt).
-4. `/gx-sim` — confirm it resolves GCP access read-only, prints a plan, and applies
+4. `/gx-about` — confirm it interviews you to fill in `ABOUT.md`, gates on your
+   approval, then seeds `ACTION-ITEMS.md` and gates again. No code, no GCP, no deploy.
+5. `/gx-sim` — confirm it resolves GCP access read-only, prints a plan, and applies
    nothing.
-5. `/gx-gcp-deploy` — confirm it resolves GCP access (sign-in + project + region)
+6. `/gx-gcp-deploy` — confirm it resolves GCP access (sign-in + project + region)
    itself, then answer at most a couple of questions, approve the gates, and get a
    live Cloud Run URL plus a `created-deployment.md` in that repo.
 

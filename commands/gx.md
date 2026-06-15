@@ -12,6 +12,7 @@ Setup & deploy:
 - `/gx` — this orientation.
 - `/gx-help <command>` — deep dive on one command.
 - `/gx-init` — set up your repo: detect the stack + scaffold the dev-workflow files. No GCP, no deploy.
+- `/gx-about` — fill in ABOUT.md by interview, then seed ACTION-ITEMS.md from it. Run after `/gx-init`, before building.
 - `/gx-sim` — dry run: show the deploy plan (infra + cost + diff) and stop. Never applies.
 - `/gx-gcp-deploy` — the headline: resolve GCP (sign-in + project) → detect → plan → approve → deploy → document. Owns all GCP setup. (`/gx-deploy` is an alias.)
 
@@ -37,4 +38,4 @@ Hygiene:
 Coming soon:
 - `/gx-add`, `/gx-rm` — add/remove connectors or MCPs. · `/gx-reset` — reset config. · `/gx-debug` — diagnostics.
 
-Set up once with `/gx-init`. Deploy path: `/gx-sim` → `/gx-gcp-deploy` (it handles GCP sign-in + project for you). Dev path: `/gx-issue-add` → `/gx-issue-pick` → `/gx-next` → `/gx-go` (or `/gx-sing`).
+Set up once with `/gx-init`, then `/gx-about` to fill ABOUT.md + seed your backlog. Deploy path: `/gx-sim` → `/gx-gcp-deploy` (it handles GCP sign-in + project for you). Dev path: `/gx-about` → `/gx-next` → `/gx-go` (or `/gx-sing`); or capture work as issues first with `/gx-issue-add` → `/gx-issue-pick`.

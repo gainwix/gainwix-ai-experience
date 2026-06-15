@@ -62,6 +62,7 @@ Authentication uses your own credentials under least privilege — nothing is ha
 ```
 /gx                 # one-line map of every command
 /gx-init            # set up the repo: detect stack + scaffold the dev-workflow files (no GCP, no deploy)
+/gx-about           # fill in ABOUT.md by interview, then seed ACTION-ITEMS.md from it (run after /gx-init)
 /gx-sim             # dry run: show the deploy plan (infra + cost + diff), then stop
 /gx-gcp-deploy      # the headline: resolve GCP (sign-in + project) → detect → plan → approve → deploy → document
 /gx-help <command>  # deep dive on any command
@@ -101,6 +102,7 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | `/gx` | ✅ | One-line orientation. |
 | `/gx-help <cmd>` | ✅ | Deep dive on one command. |
 | `/gx-init` | ✅ | Set up the repo: detect stack + scaffold the dev-workflow files. No GCP, no deploy. |
+| `/gx-about` | ✅ | Fill in `ABOUT.md` by interview, then seed `ACTION-ITEMS.md` from it. Run after `/gx-init`. |
 | `/gx-sim` | ✅ | Dry-run plan (Gate 1 in isolation). Never applies. |
 | `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — owns GCP access (sign-in + project + region). |
 
