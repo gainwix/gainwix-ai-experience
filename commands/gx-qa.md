@@ -78,14 +78,12 @@ non-zero with that message when the parse yields zero workflows.)
 
 ## Step 1 — Prerequisites (one-time per machine, then reuse)
 
-The runner needs **Playwright + the chromium browser** available. Install them
-wherever your project keeps the runner's Node deps (commonly the frontend app's
-`node_modules`, or `qa/runner/` itself — whatever your `qa/QA.md` setup section
-documents):
+`/gx-init` scaffolds the runner at `qa/runner/` — self-contained (it declares its
+own Playwright dep). Install it + the chromium browser once:
 
 ```bash
-# from whichever package owns the runner's deps (adjust the path to your repo)
-npm ci                              # install deps (node_modules is gitignored)
+cd qa/runner
+npm install                         # installs Playwright (node_modules is gitignored)
 npx playwright install chromium     # downloads the browser (needs network)
 ```
 
@@ -140,8 +138,7 @@ parallel pool with `QA_CONCURRENCY`, or widen the per-step timeout with
 `${VAR}` substitution (below) resolves to the seeded credentials:
 
 ```bash
-NODE_PATH=<path-to-the-runner's-node_modules> \
-  QA_CONCURRENCY=2 \
+QA_CONCURRENCY=2 \
   MY_APP_USER_PASSWORD=<throwaway-qa-pw> \
   MY_APP_ADMIN_EMAIL=qa@example.com \
   QA_API_BASE=<backend-origin, only if api-mode workflows exist> \
@@ -149,9 +146,10 @@ NODE_PATH=<path-to-the-runner's-node_modules> \
   node qa/runner/run.mjs --base <frontend-url>
 ```
 
-Replace the `MY_APP_*` names with whatever `${VAR}` tokens your `qa/QA.md` workflows
-reference (see the substitution section below), and the `<…>` placeholders with your
-runner's `node_modules` path, frontend URL, and (if needed) backend origin.
+The runner is self-contained (it resolves Playwright from `qa/runner/node_modules`),
+so no `NODE_PATH` is needed. Replace the `MY_APP_*` names with whatever `${VAR}`
+tokens your `qa/QA.md` workflows reference (see the substitution section below), and
+the `<…>` placeholders with your frontend URL and (if needed) backend origin.
 
 **API-mode workflows (`Mode: api`).** These run with NO browser — the runner drives
 your API surface with `fetch` and records JSON snapshots (no screenshots). They

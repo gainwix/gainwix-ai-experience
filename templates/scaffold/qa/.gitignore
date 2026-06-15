@@ -1,0 +1,11 @@
+# GainWix QA — local-only artifacts.
+# The small report (RUN-REPORT-*.html), its JSON sidecar, and RUN-LOG.md ARE
+# committed (operational /gx-qa commits). Everything below is local-only.
+
+# Per-run screenshot folders (~30 MB of PNGs each) — note the trailing slash:
+# this ignores the RUN-REPORT-<ts>/ directories, NOT the RUN-REPORT-<ts>.html/.json files.
+RUN-REPORT-*/
+
+# The runner's installed dependencies + the browser download.
+runner/node_modules/
+runner/test-results/

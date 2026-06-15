@@ -1,0 +1,17 @@
+{
+  "name": "gainwix-qa-runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-agnostic Playwright QA runner for the GainWix dev workflow (/gx-qa). Reads ../QA.md and drives chromium through each workflow.",
+  "scripts": {
+    "qa": "node run.mjs",
+    "validate": "node --check run.mjs && node --check report.mjs && echo ok"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

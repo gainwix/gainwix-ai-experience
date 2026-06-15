@@ -27,7 +27,7 @@ Dev-workflow commands (the build/QA pipeline; their full recipes live in each co
 - **/gx-issue-list** — List the `queued` issues oldest-first (read-only).
 - **/gx-issue-pick** — Dequeue the oldest `queued` issues into `ACTION-ITEMS.md` (FIFO), removing the `queued` label.
 - **/gx-sweep** — Repo hygiene: prune old local QA reports, then delete merged remote/local branches + their worktrees.
-- **Note on conventions:** these commands assume the repo's workflow conventions (a `develop` trunk, `ACTION-ITEMS.md` / `BACKLOG.md` / `changes/` / `CHANGELOG.md` / `qa/`, GitHub `queued`/`WIP`/`DONE`/`bug` labels) and, for `/gx-qa`, a Playwright runner under `qa/runner/`. They're ported faithfully from the AptonWorks dev workflow.
+- **Note on conventions:** these commands assume the repo's workflow conventions (a `develop` trunk, `ACTION-ITEMS.md` / `BACKLOG.md` / `changes/` / `CHANGELOG.md` / `qa/`, GitHub `queued`/`WIP`/`DONE`/`bug` labels). `/gx-init` scaffolds the `/gx-qa` Playwright runner under `qa/runner/` (one-time `npm install` + `npx playwright install chromium` before the first run). They're ported from the AptonWorks dev workflow.
 - **/gx-add, /gx-rm, /gx-reset, /gx-debug** — declared but not yet implemented; describe their intended purpose and say they're coming soon.
 
 If `$ARGUMENTS` is empty, tell them to run `/gx` for the overview or pass a command name, e.g. `/gx-help gx-gcp-deploy`.

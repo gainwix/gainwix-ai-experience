@@ -35,10 +35,11 @@ stack-agnostic. Document, for your stack, how to:
 
 The runner under `qa/runner/` automates the drive; you supply the boot above.
 
-> **Runner required.** `/gx-qa` drives a Playwright/chromium runner expected at
-> `qa/runner/` (`run.mjs` + report generator). `/gx-init` scaffolds this `qa/QA.md`
-> file but **not** the runner — add it before `/gx-qa` can do a live run. Until
-> then `/gx-qa` will report the missing runner and stop.
+> **Runner.** `/gx-qa` drives the Playwright/chromium runner at `qa/runner/`
+> (`run.mjs` + `report.mjs`), scaffolded for you by `/gx-init`. One-time setup
+> before the first run: `cd qa/runner && npm install && npx playwright install
+> chromium`. See [`runner/README.md`](runner/README.md) for the step vocabulary
+> and flags.
 
 **Outputs** (one set per run, committed except the screenshots):
 
