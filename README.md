@@ -23,7 +23,7 @@ Built as a [Claude Code](https://code.claude.com) plugin, distributed from this 
 From any Claude Code session:
 
 ```
-/plugin marketplace add aptonworks/gainwix-ai-experience
+/plugin marketplace add gainwix/gainwix-ai-experience
 ```
 
 (Or, for a local clone: `/plugin marketplace add /path/to/gainwix-ai-experience`.)
