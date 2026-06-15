@@ -11,7 +11,7 @@ You are showing the developer a quick map of the GainWix Cloud Deployment Workma
 Setup & deploy:
 - `/gx` — this orientation.
 - `/gx-help <command>` — deep dive on one command.
-- `/gx-init` — set up your repo: detect the stack + scaffold the dev-workflow files. No GCP, no deploy.
+- `/gx-init` — set up your repo: detect the stack and scaffold the dev-workflow files. (GCP + deploys live in `/gx-gcp-deploy`.)
 - `/gx-about` — fill in ABOUT.md by interview, then seed ACTION-ITEMS.md from it. Run after `/gx-init`, before building.
 - `/gx-sim` — dry run: show the deploy plan (infra + cost + diff) and stop. Never applies.
 - `/gx-gcp-deploy` — the headline: resolve GCP (sign-in + project) → detect → plan → approve → deploy → document. Owns all GCP setup. (`/gx-deploy` is an alias.)

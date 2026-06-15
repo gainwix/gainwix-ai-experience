@@ -1,6 +1,6 @@
 ---
 name: gx-about
-description: Product discovery — interview whoever owns the product (a founder, business owner, or developer) to fill in ABOUT.md (the product source-of-truth), verify it, then seed ACTION-ITEMS.md with a prioritized feature list generated from it. Run after /gx-init, before the dev-workflow commands. Planning/docs only — no code, no GCP, no deploy.
+description: Product discovery — interview whoever owns the product (a founder, business owner, or developer) to fill in ABOUT.md (the product source-of-truth), verify it, then seed ACTION-ITEMS.md with a prioritized feature list generated from it. Run after /gx-init, before the dev-workflow commands. Planning and docs only — building and deploying come later.
 disable-model-invocation: true
 ---
 
@@ -17,9 +17,9 @@ things, each followed by a human verification gate:
    through.
 
 Run it **in this conversation** — do NOT dispatch it as a background subagent (a
-subagent can't interview you). It writes **only** `ABOUT.md` and `ACTION-ITEMS.md`.
-It does NOT touch GCP, does NOT deploy, and does NOT run the dev workflow — it
-just gets you ready to.
+subagent can't interview you). It writes **only** `ABOUT.md` and `ACTION-ITEMS.md`:
+pure discovery and planning that gets you ready to build and ship. Building is
+`/gx-next`/`/gx-go`; deploying is `/gx-gcp-deploy`.
 
 **Present every discrete choice as an interactive question using the
 `AskUserQuestion` tool** (recommended option first/default) — never a "reply with
@@ -155,9 +155,9 @@ Close with the next steps, plain-spoken:
 ## Notes
 
 - **Scope: discovery only.** `/gx-about` writes `ABOUT.md` + `ACTION-ITEMS.md` and
-  nothing else — no code, no tests, no PRs, no GCP, no deploy, and no `changes/*.md`
-  record (filling these doc/queue files is not a code change; see `/gx-go`'s
-  queue-edit exception).
+  nothing else. These are doc/queue edits, not a code change, so there's no PR and
+  no `changes/*.md` record (see `/gx-go`'s queue-edit exception); building and
+  deploying come later.
 - **`ABOUT.md` is yours to own.** It's the product source-of-truth on purpose; this
   command just makes filling it fast and turns it into a backlog. Re-run
   `/gx-about` anytime to refine the doc and re-seed.

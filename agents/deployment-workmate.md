@@ -123,7 +123,7 @@ A developer does **not** need to arrive with a GCP project (and never needs an "
 Once a project is resolved, **set it so nothing downstream complains about a missing project**: run `gcloud config set project <id>` and `gcloud auth application-default set-quota-project <id>` yourself. Then use it for the rest of the session everywhere `${user_config.gcp_project}` would be used, and tell the developer to save it in the plugin settings so it sticks across sessions.
 
 ## Onboarding (`/gx-init`)
-`/gx-init` sets up the **repository** for the GainWix workflow — **scaffolding only**. It does **not** configure GCP: no auth, no project resolution, no region, no `gcloud`. All of that is owned by `/gx-gcp-deploy` (and `/gx-sim`), which resolve GCP access at deploy time via the **GCP access** section above — so `/gx-init` works with no Google account, no project, and even offline.
+`/gx-init` sets up the **repository** for the GainWix workflow — it scaffolds the dev-workflow files. GCP sign-in, project, and region are handled later by `/gx-gcp-deploy` (and `/gx-sim`) via the **GCP access** section above, so `/gx-init` runs with no Google account, even offline. Keep this run to scaffolding — leave deploys and GCP to the deploy commands.
 
 Detect the stack (read files: language, framework, runtime, build method, port, env vars) for context, then scaffold the dev-workflow files.
 
