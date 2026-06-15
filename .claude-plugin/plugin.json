@@ -10,7 +10,7 @@
     "gcp_project": {
       "type": "string",
       "title": "GCP project ID (optional)",
-      "description": "The Google Cloud project to deploy into (e.g. my-app-prod). Leave empty if you don't have one yet — /gx-init will find or create one for you.",
+      "description": "The Google Cloud project to deploy into (e.g. my-app-prod). Optional — leave it empty (and skip the rest) and /gx-gcp-deploy will find or create one when you deploy. Nothing on this screen signs you in or runs gcloud; it only stores values.",
       "required": false
     },
     "gcp_region": {
