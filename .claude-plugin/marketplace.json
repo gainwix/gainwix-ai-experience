@@ -2,7 +2,7 @@
   "name": "gainwix-workmates",
   "owner": {
     "name": "GainWix",
-    "email": "hello@aptonworks.com"
+    "email": "hello@gainwix.com"
   },
   "description": "GainWix AI workmates for Claude Code. Currently ships the Cloud Deployment Workmate.",
   "metadata": {

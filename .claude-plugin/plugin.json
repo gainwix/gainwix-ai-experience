@@ -3,7 +3,7 @@
   "description": "An AI teammate that deploys your app to Google Cloud Platform without you needing to understand cloud infrastructure. Say \"deploy\" — it does the heavy lifting.",
   "author": {
     "name": "GainWix",
-    "email": "hello@aptonworks.com"
+    "email": "hello@gainwix.com"
   },
   "keywords": ["deployment", "gcp", "cloud-run", "devops", "workmate"],
   "userConfig": {
