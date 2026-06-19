@@ -12,12 +12,12 @@ Run the deploy sequence end to end:
 
 1. **Pre-flight git hygiene** — confirm with me first: clean working tree, merged to `main`, cut a release branch.
 2. **Ensure GCP access** — this command owns all cloud config (NOT `/gx-init`). If my sign-in is missing/expired or no project is set/reachable, resolve it yourself via your **GCP access** procedure (authenticate by opening the browser → resolve or create the project → confirm the region). Never hand me terminal commands. If GCP is already configured, just confirm the project + region and move on.
-3. **Detect, pick target & classify** — language/framework/runtime/build/port/env; choose the target (**static site → Cloud Storage bucket**, **containerized app → Cloud Run**); classify production vs non-production and state why.
-4. **Plan** — the GCP infra for the chosen target (a Cloud Run service, or a public Cloud Storage bucket for a static site; flag DB/networking/IAM if also needed); human-readable plan with estimated cost and the diff from current state.
+3. **Detect, pick target & classify** — language/framework/runtime/build/port/env; choose the target (**static site → bucket**, **containerized app → Cloud Run**, **many services → GKE**, **stateful/always-on → VM**) and whether it needs a **Cloud SQL** database + networking/IAM; classify production vs non-production and state why.
+4. **Plan** — the whole architecture for the chosen target (compute + any Cloud SQL + VPC/IAM/secrets); multi-resource is planned with **Terraform** (a `terraform plan` shown as the diff). Human-readable plan with an **honest** monthly cost (call out that GKE/VM + Cloud SQL is real ongoing money, unlike a bucket or scale-to-zero Cloud Run).
 5. **Ask the minimum** — at most 2–3 questions, each a short options list with the recommended option first/default.
 6. **Write `.gainwix/deploy-context.json`** with the honest classification before any deploy tool call.
 7. **GATE 1 — plan approval** — require my explicit approval before applying anything.
-8. **Execute** — Cloud Run via the MCP tools (`deploy_local_folder` / `deploy_file_contents`); a static site via `gcloud storage` (build → upload → make public → set index/404). Never tell me to open the GCP console.
+8. **Execute** — Cloud Run via the MCP tools; a static site via `gcloud storage`; GKE / VM / Cloud SQL / VPC / IAM via **Terraform** (`apply` after Gate 1) plus `gcloud`/`kubectl`. DB passwords go to Secret Manager — never printed or committed. Never tell me to open the GCP console.
 9. **GATE 2 — production promotion** — for production, an explicit human approval is mandatory; the PreToolUse hook enforces it even in Auto mode. Do not try to bypass it.
 10. **Artifact** — write `created-deployment.md` from `${CLAUDE_PLUGIN_ROOT}/templates/deployment.md`: resources, live URL(s), rollback, scaling.
 11. **Monitoring is out of scope** — leave the marked TODO only.

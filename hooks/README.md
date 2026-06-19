@@ -14,22 +14,25 @@ production and gated.
 
 ## What it intercepts — and the deliberate tradeoff (read this before "fixing" it)
 
-The gate must cover **both** deploy paths, which reach GCP differently:
+The gate must cover **every** deploy/provision path, which reach GCP differently:
 
 | Deploy path | How it reaches GCP | How the gate catches it |
 | :---------- | :----------------- | :---------------------- |
 | **Cloud Run** | the Cloud Run **MCP** tools (`mcp__cloud-run__deploy*`) | a clean tool-name matcher in `hooks.json` |
-| **Static site → Cloud Storage bucket** | **`gcloud storage` via Bash** (no bucket-deploy MCP is wired) | a `Bash` matcher in `hooks.json` |
+| **Static site → bucket** | **`gcloud storage` via Bash** | a `Bash` matcher (command pattern) |
+| **GKE / VM / Cloud SQL / VPC / IAM** | **Terraform, `gcloud`, `kubectl` via Bash** (`terraform apply`/`destroy`, `kubectl apply…`, `gcloud compute`/`sql`/`container`/`run` provisioning) | the same `Bash` matcher |
 
-Because the bucket path is plain `gcloud` (not an MCP tool), the only deterministic
-chokepoint for it is a **`PreToolUse` hook on the `Bash` tool**. So, by design:
+Because everything except Cloud Run is plain CLI (not an MCP tool), the only
+deterministic chokepoint for those is a **`PreToolUse` hook on the `Bash` tool**.
+Read-only commands (`terraform plan`, `kubectl get`, `gcloud … list/describe`) are
+**not** matched — only write/provision verbs. So, by design:
 
 > **The gate runs a quick `node` check on *every* `Bash` tool call.**
 
-For any command that isn't a bucket publish (`gcloud storage rsync|cp … gs://`,
-`buckets add-iam-policy-binding`, `buckets update … --web-…`, or the `gsutil`
-equivalents), the script **exits 0 immediately** — no decision, no output, no
-interference. The cost is one fast `node` spawn per Bash call: functionally
+For any command that isn't a deploy/provision — a bucket publish, `terraform
+apply`/`destroy`, a `kubectl` mutation (`apply`/`delete`/`rollout`/…), or a
+`gcloud compute`/`sql`/`container`/`run` provision — the script **exits 0
+immediately**: no decision, no output, no interference. The cost is one fast `node` spawn per Bash call: functionally
 invisible, but real, and it touches *all* Bash in every session where the plugin
 is enabled. That is the price of enforcing Gate 2 on the gcloud path, and it's
 intentional — not a bug.
@@ -46,7 +49,7 @@ intentional — not a bug.
   that.
 
 Until then, the broad `Bash` matcher + instant-defer script is the simplest way to
-keep the production guarantee honest across both deploy paths.
+keep the production guarantee honest across every deploy/provision path.
 
 ## See also
 

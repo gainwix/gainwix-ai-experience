@@ -10,12 +10,16 @@
  * prompt. Auto mode CANNOT satisfy an "ask" on its own, so Gate 2 holds even in
  * Auto mode. This is a guarantee, not a polite suggestion.
  *
- * It covers BOTH deploy paths:
- *   - Cloud Run  — the MCP deploy tools (mcp__cloud-run__deploy*).
- *   - Static site — `gcloud storage` / `gsutil` commands that publish to a bucket
- *                   (upload, make-public, or set website config), run via Bash.
- * Any other tool call (incl. ordinary Bash) is ignored — the hook defers
- * instantly so it never interferes with normal work.
+ * It covers EVERY deploy/provision path:
+ *   - Cloud Run   — the MCP deploy tools (mcp__cloud-run__deploy*).
+ *   - Static site — `gcloud storage` / `gsutil` publish to a bucket (upload,
+ *                   make-public, set website config), via Bash.
+ *   - Infra       — `terraform apply|destroy`, `kubectl` mutations, and
+ *                   `gcloud compute|sql|container|run` provisioning/deploys
+ *                   (GKE, Compute Engine VM, Cloud SQL), via Bash.
+ * Read-only commands (terraform plan, kubectl get, gcloud … list/describe, etc.)
+ * and any other Bash are ignored — the hook defers instantly so it never
+ * interferes with normal work.
  *
  * Classification source of truth: <cwd>/.gainwix/deploy-context.json, written by
  * the workmate during planning. Fail-safe: if that file is missing, unreadable,
@@ -51,18 +55,54 @@ function defer() {
   process.exit(0);
 }
 
-// Is this Bash command a static-site publish to a Cloud Storage bucket?
-// (upload to gs://, make a bucket public, or set its website config)
-function isBucketPublish(command) {
-  if (typeof command !== "string") return false;
+// Does this Bash command deploy/provision GCP infra we must gate? Returns a
+// short human label (for the prompt message) or null to defer. Only WRITE/
+// provision verbs match — read-only commands (terraform plan, kubectl get,
+// gcloud … list/describe) deliberately return null so normal work is untouched.
+function classifyBashDeploy(command) {
+  if (typeof command !== "string") return null;
   const c = command;
-  return (
+
+  // Static-site publish to a Cloud Storage bucket. We gate the EXPOSURE moments
+  // — uploading content, making it public, or deleting the bucket — not a bare
+  // `buckets create` (an empty private bucket isn't live, and the Terraform
+  // state bucket `gs://<project>-tfstate` is created the same way; the actual
+  // go-live, the upload + make-public below, is already gated).
+  if (
     /\bgcloud\s+storage\s+(rsync|cp)\b[\s\S]*gs:\/\//.test(c) ||
-    /\bgcloud\s+storage\s+buckets\s+add-iam-policy-binding\b/.test(c) ||
+    /\bgcloud\s+storage\s+buckets\s+(add-iam-policy-binding|delete)\b/.test(c) ||
     /\bgcloud\s+storage\s+buckets\s+update\b[\s\S]*--web-/.test(c) ||
     /\bgsutil\b[\s\S]*\b(rsync|cp)\b[\s\S]*gs:\/\//.test(c) ||
-    /\bgsutil\s+(iam|web)\b/.test(c)
-  );
+    /\bgsutil\s+(iam|web|acl|defacl)\b/.test(c)
+  ) {
+    return "static-site bucket";
+  }
+
+  // Terraform — only apply/destroy change the world (plan/init/validate don't)
+  if (/\bterraform\s+(apply|destroy)\b/.test(c)) {
+    return "Terraform-managed infrastructure";
+  }
+
+  // kubectl mutations (GKE workloads) — not get/describe/logs
+  if (/\bkubectl\s+(apply|delete|replace|patch|create|scale|rollout|set)\b/.test(c)) {
+    return "GKE workload";
+  }
+
+  // gcloud provisioning/deploys for compute / sql / container / run
+  if (/\bgcloud\s+sql\b[\s\S]*?\b(create|delete|patch|restart|clone|import)\b/.test(c)) {
+    return "Cloud SQL";
+  }
+  if (/\bgcloud\s+container\b[\s\S]*?\b(create|delete|update|resize|upgrade)\b/.test(c)) {
+    return "GKE cluster";
+  }
+  if (/\bgcloud\s+compute\b[\s\S]*?\b(create|delete|update|reset|start|stop|resize)\b/.test(c)) {
+    return "Compute Engine VM";
+  }
+  if (/\bgcloud\s+run\s+(deploy\b|services\s+(update|update-traffic|delete|replace))/.test(c)) {
+    return "Cloud Run";
+  }
+
+  return null;
 }
 
 function looksProductionFromInput(toolInput) {
@@ -83,16 +123,16 @@ try {
 const toolName = payload.tool_name || "";
 const toolInput = payload.tool_input || {};
 
-// Decide whether this call is a deploy we must gate.
+// Decide whether this call is a deploy/provision we must gate.
 const isCloudRunDeploy = /^mcp__cloud-run__deploy/.test(toolName);
-const isStaticPublish = toolName === "Bash" && isBucketPublish(toolInput.command);
+const bashKind = toolName === "Bash" ? classifyBashDeploy(toolInput.command) : null;
 
-if (!isCloudRunDeploy && !isStaticPublish) {
-  // Not a deploy — get out of the way immediately.
+if (!isCloudRunDeploy && !bashKind) {
+  // Not a deploy/provision — get out of the way immediately.
   defer();
 }
 
-const kind = isCloudRunDeploy ? "Cloud Run" : "static-site bucket";
+const kind = isCloudRunDeploy ? "Cloud Run" : bashKind;
 const cwd = payload.cwd || process.cwd();
 const contextPath = path.join(cwd, ".gainwix", "deploy-context.json");
 

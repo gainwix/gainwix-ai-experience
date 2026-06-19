@@ -6,7 +6,9 @@
 - **Deployed at:** <timestamp>
 - **Deployed by:** <git user / who ran it>
 - **Classification:** <production | non-production>
-- **Target:** <Cloud Run service | Static site (Cloud Storage bucket)>
+- **Target:** <Cloud Run service | Static site (Cloud Storage bucket) | GKE | Compute Engine VM>
+- **Database:** <Cloud SQL (Postgres/MySQL) instance name, or "none">
+- **Provisioned with:** <Cloud Run MCP | gcloud | Terraform (state: gs://<project>-tfstate)>
 - **GCP project:** <project-id>
 - **Region:** <region>
 - **Release branch / commit:** <branch @ short-sha>
@@ -15,6 +17,8 @@
 
 - Cloud Run: <service name> → <https://...run.app>
 - Static bucket: <bucket> → `https://storage.googleapis.com/<bucket>/index.html`
+- GKE: <Ingress/LoadBalancer external IP or hostname>
+- VM: <external IP> (port <N>)
 
 <!-- Keep the line that matches this deployment's target; delete the other. -->
 
@@ -28,9 +32,15 @@ List every resource created or changed, in plain terms.
 | :------- | :--- | :--- | :---- |
 | Cloud Run service | run.googleapis.com | <name> | <port, image, build method> |
 | Storage bucket (static site) | storage.googleapis.com | <bucket> | public-read; web pages index.html / 404.html |
-| <database, if any> | | | |
-| <networking, if any> | | | |
-| <IAM binding, if any> | | | |
+| GKE cluster | container.googleapis.com | <cluster> | Autopilot? region; workload <deployment> |
+| Compute Engine VM | compute.googleapis.com | <instance> | machine type; firewall rule for port <N> |
+| Cloud SQL instance | sqladmin.googleapis.com | <instance> | engine/version; db <db>; user <user> |
+| Secret Manager secret | secretmanager.googleapis.com | <secret-name> | **name only — never the value** (e.g. DB password) |
+| VPC / subnet / firewall | compute.googleapis.com | <names> | what they allow |
+| IAM / service account | iam.googleapis.com | <sa> | roles granted (least privilege) |
+
+<!-- Keep only the rows that apply to this deployment; delete the rest. -->
+<!-- If provisioned with Terraform, the .tf under infra/ + the GCS state bucket are the source of truth. -->
 
 ## Configuration
 
@@ -65,6 +75,18 @@ gcloud storage rsync <previous-build-dir> gs://<bucket> \
   --recursive --delete-unmatched-destination-objects
 ```
 
+**GKE:** `kubectl rollout undo deployment/<name>` (or re-apply the previous image tag).
+
+**VM:** redeploy the previous artifact, or roll back the instance template if it's
+in a managed instance group (rolling update).
+
+**Cloud SQL:** restore from an automated backup or a point-in-time — **never drop
+the instance to "roll back."**
+
+**Terraform-managed infra:** revert the `.tf` and `terraform apply` again; `terraform
+plan` shows the drift first. (`terraform destroy` tears a stack down — production
+destroys are gated and will ask for your approval.)
+
 ## How to scale
 
 ```bash
@@ -80,6 +102,10 @@ gcloud run services update <name> \
 **Static bucket:** nothing to scale — Cloud Storage serves the files for you. Add
 Cloud CDN + an HTTPS load balancer (or move to Firebase Hosting) if you want a
 custom domain and edge caching.
+
+**GKE:** a Horizontal Pod Autoscaler on the workload + node/Autopilot autoscaling.
+**VM:** bump the machine type, or put it behind a managed instance group to scale out.
+**Cloud SQL:** raise the machine tier and storage (storage can auto-grow).
 
 ## TODO: monitoring
 

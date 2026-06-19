@@ -13,7 +13,7 @@ Distributed as a Claude Code plugin from this private marketplace.
 - **Slash commands first.** The `/gx-*` commands are the product — thin entry points that run a workflow in your conversation: plan, build, QA, issue-tracking, and (when you want it) deploy. Most run right in the main chat.
 - **An agent for the heavy reasoning.** The deploy/onboarding commands lean on [`agents/deployment-workmate.md`](agents/deployment-workmate.md), a persona that owns that reasoning; the other commands follow their own command playbooks.
 - **GCP only when you deploy.** The deploy command talks to the external [Cloud Run MCP server](https://github.com/GoogleCloudPlatform/cloud-run-mcp) (wired in [`.mcp.json`](.mcp.json)) using your local `gcloud` — there's nothing to configure at install.
-- **Hooks are the conscience.** [`hooks/gate-production.js`](hooks/gate-production.js) forces an interactive human approval before any production deploy — it can't be auto-approved. It covers both deploy paths (Cloud Run *and* the gcloud bucket path), which is why it also runs on `Bash`; see [`hooks/README.md`](hooks/README.md) for that design note and the tradeoff.
+- **Hooks are the conscience.** [`hooks/gate-production.js`](hooks/gate-production.js) forces an interactive human approval before any production deploy — it can't be auto-approved. It covers **every** path — Cloud Run (MCP), the `gcloud storage` bucket path, and `terraform`/`gcloud`/`kubectl` for GKE/VM/Cloud SQL — which is why it also runs on `Bash`; see [`hooks/README.md`](hooks/README.md) for that design note and the tradeoff.
 
 ---
 
@@ -72,12 +72,12 @@ Deploying is just one command, but it carries real weight, so here's the flow. (
 
 1. **Pre-flight git hygiene** — clean tree, merge to `main`, cut a release branch (confirmed with you first).
 2. **Ensure GCP access** — resolves sign-in + project + region for you (browser approval only; never terminal commands). This command owns GCP setup — `/gx-init` doesn't touch it.
-3. **Detect, pick target & classify** — your language/framework/runtime/port/env; the right target (a **static site → Cloud Storage bucket**, a **containerized app → Cloud Run**); and whether this is production.
-4. **Plan** — the GCP infra for that target (a Cloud Run service, or a public Cloud Storage bucket; flags any database/networking/IAM), an estimated monthly cost, and the diff from what's already deployed.
+3. **Detect, pick target & classify** — your language/framework/runtime/port/env; the right target (**static site → bucket**, **containerized app → Cloud Run**, **many services → GKE**, **stateful/always-on → a VM**), whether it needs a **Cloud SQL** database, and whether this is production.
+4. **Plan** — the whole architecture for that target (compute + any Cloud SQL + VPC/IAM/secrets), an honest estimated monthly cost (a bucket is pennies and Cloud Run scales to zero, but a GKE cluster / always-on VM + Cloud SQL is real ongoing money), and the diff. Anything multi-resource is planned with **Terraform** (a `terraform plan` you approve before apply).
 5. **Ask the minimum** — at most 2–3 questions, recommended option pre-selected.
 6. **Gate 1 — plan approval** — nothing is applied until you approve.
-7. **Execute** — Cloud Run through the MCP, or a static site to a public Cloud Storage bucket via `gcloud`. No console, ever.
-8. **Gate 2 — production promotion** — a mandatory human approval, enforced by a hook even in Auto mode — for **both** the Cloud Run and bucket paths.
+7. **Execute** — Cloud Run through the MCP; a static site to a bucket via `gcloud`; GKE / VM / Cloud SQL / VPC / IAM via **Terraform** (+ `gcloud`/`kubectl`). No console, ever. Database passwords go to Secret Manager — never printed or committed.
+8. **Gate 2 — production promotion** — a mandatory human approval, enforced by a hook even in Auto mode — across **every** path (Cloud Run, bucket, `terraform apply`, `kubectl apply`, `gcloud compute/sql/container`).
 9. **Artifact** — writes `created-deployment.md`: every resource, the live URL(s), how to roll back, how to scale.
 
 Monitoring is intentionally **out of scope** for this build (the artifact leaves a marked `TODO`).
@@ -118,7 +118,7 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
 | `/gx-sim` | ✅ | Dry-run deploy plan (Gate 1 in isolation). Never applies. |
-| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — picks the target (static site → bucket, app → Cloud Run) and handles its own GCP access. |
+| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — picks the target (bucket / Cloud Run / GKE / VM), provisions the architecture incl. Cloud SQL + VPC/IAM (Terraform/gcloud), and handles its own GCP access. |
 
 **Coming soon**
 
