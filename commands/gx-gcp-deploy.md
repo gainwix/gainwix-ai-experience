@@ -22,6 +22,6 @@ Run the deploy sequence end to end:
 10. **Artifact** — write `created-deployment.md` from `${CLAUDE_PLUGIN_ROOT}/templates/deployment.md`: resources, live URL(s), rollback, scaling.
 11. **Monitoring is out of scope** — leave the marked TODO only.
 
-Config: project `${user_config.gcp_project}` · region `${user_config.gcp_region}` · mode `${user_config.default_mode}`.
+No install config to read: you resolve the project + region yourself in step 2 (and `gcloud` remembers them for next time). Trust mode defaults to **suggest** (every gate interactive) unless I say "auto" for this run.
 
 I'm an app developer, not a platform engineer — keep it plain and do the heavy lifting for me.

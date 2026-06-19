@@ -1,18 +1,19 @@
-# GainWix — Cloud Deployment Workmate
+# GainWix — agentic dev workflow for Claude Code
 
-An AI teammate that deploys your app to **Google Cloud Run** — without you needing to understand cloud infrastructure. You install it, you say **"deploy,"** and it does the heavy lifting: detects your stack, plans the infrastructure, shows you the cost, gets your approval, ships it, and writes down exactly what it created.
+A set of `/gx` slash commands that drive an AI teammate through your whole build loop — **plan → build → QA → ship** — right inside [Claude Code](https://code.claude.com). You capture an idea; the commands take it to reviewed, merged code. **Deploying to Google Cloud Run is one of those commands**, not the whole story.
 
-Built as a [Claude Code](https://code.claude.com) plugin, distributed from this private marketplace.
+Distributed as a Claude Code plugin from this private marketplace.
 
-> Built for app developers (frontend/backend), not platform engineers. No IAM, no VPCs, no console clicking.
+> Install it and you get the `/gx` commands — no setup prompts, no cloud config up front.
 
 ---
 
 ## How it's built (the design in one breath)
 
-- **The workmate is an agent.** [`agents/deployment-workmate.md`](agents/deployment-workmate.md) is a persistent deployment persona that owns all the reasoning. The `/gx` commands are thin entry points that summon it — they don't script deployments.
-- **GCP does the execution.** All real cloud operations go through the external [Google Cloud Run MCP server](https://github.com/GoogleCloudPlatform/cloud-run-mcp), wired in [`.mcp.json`](.mcp.json). We don't build or bundle our own MCP, and the developer never sees or configures it.
-- **Hooks are the conscience.** [`hooks/gate-production.js`](hooks/gate-production.js) is a `PreToolUse` hook that makes the production-promotion gate a *guarantee*, not a prompt suggestion — it forces an interactive human approval on every production deploy, and it cannot be auto-approved.
+- **Slash commands first.** The `/gx-*` commands are the product — thin entry points that run a workflow in your conversation: plan, build, QA, issue-tracking, and (when you want it) deploy. Most run right in the main chat.
+- **An agent for the heavy reasoning.** The deploy/onboarding commands lean on [`agents/deployment-workmate.md`](agents/deployment-workmate.md), a persona that owns that reasoning; the other commands follow their own command playbooks.
+- **GCP only when you deploy.** The deploy command talks to the external [Cloud Run MCP server](https://github.com/GoogleCloudPlatform/cloud-run-mcp) (wired in [`.mcp.json`](.mcp.json)) using your local `gcloud` — there's nothing to configure at install.
+- **Hooks are the conscience.** [`hooks/gate-production.js`](hooks/gate-production.js) forces an interactive human approval before any production deploy — it can't be auto-approved.
 
 ---
 
@@ -34,24 +35,15 @@ From any Claude Code session:
 /plugin install gainwix@gainwix-workmates
 ```
 
-### 3. Configure (prompted at install)
+### 3. That's it — no install config
 
-Claude Code prompts you for:
+The plugin installs with **no setup prompts**. You get the `/gx` commands right away. Nothing about GCP is asked up front; the deploy command handles cloud sign-in and project setup itself, only if and when you actually deploy.
 
-| Setting | Required | Notes |
-| :------ | :------- | :---- |
-| **GCP project ID** | no | The project to deploy into. Leave empty if you don't have one yet — `/gx-gcp-deploy` will find or create one for you when you deploy. |
-| **GCP region** | no | Defaults to `us-central1`. |
-| **Service account key** | no | Path to a JSON key. Leave empty to use your local `gcloud` Application Default Credentials. |
-| **Trust mode** | no | `suggest` (default, every gate interactive) or `auto` (Gate 1 may auto-approve; production never does). |
+### Prerequisites (only for the commands that need them)
 
-The Cloud Run MCP is provisioned automatically from these values — there is no "connect your MCP" step.
-
-### Prerequisites
-
-- **Node.js** (the Cloud Run MCP runs via `npx`; the production gate runs via `node`).
-- **gcloud CLI** installed (unless you supplied a service-account key). You don't need to sign in ahead of time — if your Google sign-in is missing or expired, the workmate refreshes it for you; your only step is approving access in the browser window it opens.
-- **A Google Cloud billing account.** You do **not** need a GCP project (`/gx-gcp-deploy` creates one) or an organization (personal accounts don't have one). But Cloud Run requires billing, and adding a billing account (a card) is the one step only you can do, at <https://console.cloud.google.com/billing>. It's the single console visit this plugin will ever ask of you.
+- **Node.js** — used by the deploy command's Cloud Run MCP (via `npx`), the production gate, and the QA runner. Not needed for the planning/building commands.
+- **gcloud CLI** — only for deploying. You don't sign in ahead of time; `/gx-gcp-deploy` opens the browser to sign you in when needed, and can find or create a project for you.
+- **A Google Cloud billing account** — only to actually deploy (Cloud Run needs billing). Adding a card is the one step only you can do; the deploy command points you there if it's missing.
 
 Authentication uses your own credentials under least privilege — nothing is hardcoded.
 
@@ -61,21 +53,25 @@ Authentication uses your own credentials under least privilege — nothing is ha
 
 ```
 /gx                 # one-line map of every command
-/gx-init            # set up the repo: detect stack + scaffold the dev-workflow files (GCP/deploys come later)
-/gx-about           # fill in ABOUT.md by interview, then seed ACTION-ITEMS.md from it (run after /gx-init)
-/gx-sim             # dry run: show the deploy plan (infra + cost + diff), then stop
-/gx-gcp-deploy      # the headline: resolve GCP (sign-in + project) → detect → plan → approve → deploy → document
+/gx-init            # set up the repo: detect the stack + scaffold the dev-workflow files
+/gx-about           # interview to fill in ABOUT.md, then seed ACTION-ITEMS.md from it
+/gx-next            # plan the top idea into a real, executable task
+/gx-go              # build one task end-to-end → PR → merge, with a change record
+/gx-sing            # run the whole list, one task at a time
+/gx-ping            # run independent tasks in parallel
+/gx-qa              # end-to-end QA run with a screenshotted report
+/gx-gcp-deploy      # ship it to Google Cloud Run (one of the commands; /gx-deploy is an alias)
 /gx-help <command>  # deep dive on any command
 ```
 
-`/gx-deploy` is an alias for `/gx-gcp-deploy`.
+A typical loop: `/gx-init` → `/gx-about` → `/gx-next` → `/gx-go` (or `/gx-sing` to run the whole list). Deploy with `/gx-gcp-deploy` whenever you're ready.
 
-### What a deploy does
+### What the deploy command (`/gx-gcp-deploy`) does
 
-A condensed view — `/gx-help gx-gcp-deploy` (and [`agents/deployment-workmate.md`](agents/deployment-workmate.md)) have the authoritative step-by-step.
+Deploying is just one command, but it carries real weight, so here's the flow. (Condensed — `/gx-help gx-gcp-deploy` and [`agents/deployment-workmate.md`](agents/deployment-workmate.md) have the authoritative step-by-step.)
 
 1. **Pre-flight git hygiene** — clean tree, merge to `main`, cut a release branch (confirmed with you first).
-2. **Ensure GCP access** — resolves sign-in + project + region for you (browser approval only; never terminal commands). This command owns GCP setup, not `/gx-init`.
+2. **Ensure GCP access** — resolves sign-in + project + region for you (browser approval only; never terminal commands). This command owns GCP setup — `/gx-init` doesn't touch it.
 3. **Detect & classify** — your language/framework/runtime/port/env, and whether this is production.
 4. **Plan** — the GCP infra needed (Cloud Run first; flags any database/networking/IAM), an estimated monthly cost, and the diff from what's already deployed.
 5. **Ask the minimum** — at most 2–3 questions, recommended option pre-selected.
@@ -86,32 +82,27 @@ A condensed view — `/gx-help gx-gcp-deploy` (and [`agents/deployment-workmate.
 
 Monitoring is intentionally **out of scope** for this build (the artifact leaves a marked `TODO`).
 
-### Trust modes
-
-- **Suggest** (default): every gate is interactive. Human-first.
-- **Auto**: Gate 1 may be auto-approved for high-confidence, non-production changes. **Gate 2 (production) is never auto-approved** — the `PreToolUse` hook turns it into an interactive permission prompt regardless of mode.
+**Trust modes (deploy only).** Default is **suggest** — every gate is interactive. Say "auto" for a run to let Gate 1 self-approve high-confidence, non-production changes; **Gate 2 (production) is never auto-approved** — the `PreToolUse` hook turns it into an interactive prompt regardless.
 
 ---
 
 ## Command reference
 
-**Deploy**
+**Get started**
 
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
 | `/gx` | ✅ | One-line orientation. |
 | `/gx-help <cmd>` | ✅ | Deep dive on one command. |
-| `/gx-init` | ✅ | Set up the repo: detect stack + scaffold the dev-workflow files. (GCP/deploys come later.) |
+| `/gx-init` | ✅ | Set up the repo: detect the stack + scaffold the dev-workflow files. |
 | `/gx-about` | ✅ | Fill in `ABOUT.md` by interview, then seed `ACTION-ITEMS.md` from it. Run after `/gx-init`. |
-| `/gx-sim` | ✅ | Dry-run plan (Gate 1 in isolation). Never applies. |
-| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — owns GCP access (sign-in + project + region). |
 
-**Dev workflow** (ported from the AptonWorks dev pipeline — assume a `develop` trunk + the `ACTION-ITEMS.md`/`BACKLOG.md`/`changes/`/`qa/` conventions)
+**Build & ship the work** (ported from the AptonWorks dev pipeline — assume a `develop` trunk + the `ACTION-ITEMS.md`/`BACKLOG.md`/`changes/`/`qa/` conventions)
 
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
-| `/gx-go` | ✅ | Run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record. |
 | `/gx-next` | ✅ | Plan the top `ACTION-ITEMS.md` idea into a `BACKLOG.md` task. |
+| `/gx-go` | ✅ | Run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record. |
 | `/gx-sing` | ✅ | Serial loop: plan one + ship one until both queues drain. |
 | `/gx-ping` | ✅ | Parallel loop: conflict-free batch (worktree per item), serial merges. |
 | `/gx-qa` | ✅ | End-to-end browser + API QA → screenshotted report. |
@@ -121,6 +112,13 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | `/gx-issue-list` | ✅ | View the `queued` queue, oldest-first (read-only). |
 | `/gx-issue-pick` | ✅ | Dequeue oldest `queued` issues into `ACTION-ITEMS.md`. |
 | `/gx-sweep` | ✅ | Prune old QA reports + merged branches. |
+
+**Deploy** (one of the features)
+
+| Command | Status | Purpose |
+| :------ | :----- | :------ |
+| `/gx-sim` | ✅ | Dry-run deploy plan (Gate 1 in isolation). Never applies. |
+| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — handles its own GCP access (sign-in + project + region). |
 
 **Coming soon**
 

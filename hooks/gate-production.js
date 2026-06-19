@@ -2,7 +2,7 @@
 /**
  * GainWix — GATE 2: production promotion gate.
  *
- * This is the conscience of the deployment workmate. It runs as a PreToolUse
+ * This is the conscience of the GainWix deploy command. It runs as a PreToolUse
  * hook on every Cloud Run MCP deploy tool call (mcp__cloud-run__deploy*).
  *
  * It enforces — deterministically, independent of the agent and independent of

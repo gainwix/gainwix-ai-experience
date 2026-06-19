@@ -4,15 +4,15 @@
     "name": "GainWix",
     "email": "hello@gainwix.com"
   },
-  "description": "GainWix AI workmates for Claude Code. Currently ships the Cloud Deployment Workmate.",
+  "description": "GainWix dev-workflow slash commands for Claude Code — plan, build, QA, and ship. Deploying to Cloud Run is one command.",
   "metadata": {
-    "description": "GainWix AI workmates for Claude Code. Currently ships the Cloud Deployment Workmate."
+    "description": "GainWix dev-workflow slash commands for Claude Code — plan, build, QA, and ship. Deploying to Cloud Run is one command."
   },
   "plugins": [
     {
       "name": "gainwix",
       "source": "./",
-      "description": "Deploy your app to Google Cloud Run through an AI teammate — detect, plan, gate, deploy, document. No cloud expertise required."
+      "description": "Agentic /gx slash commands for Claude Code: plan → build → QA → ship, all driven by an AI teammate. Deploying to Google Cloud Run is one of the commands."
     }
   ]
 }

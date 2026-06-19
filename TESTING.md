@@ -47,8 +47,9 @@ This mirrors exactly what end users do.
 /plugin install gainwix@gainwix-workmates
 ```
 
-You'll be prompted for the four config values (GCP project, region, key, mode).
-Use a throwaway/sandbox GCP project for testing.
+Install asks for **nothing** — no config prompts. You get the `/gx` commands
+immediately. (GCP is resolved later, only when you run a deploy command. Use a
+throwaway/sandbox GCP project when you get to that step.)
 
 ## 3. Smoke test the surface (no cloud needed)
 
@@ -69,9 +70,10 @@ With the plugin enabled and Node available, the `cloud-run` MCP server should st
 
 You should see `cloud-run` connected, exposing tools like `list_services`,
 `get_service`, `deploy_local_folder`, `create_project`. The developer never
-configured this — it came from `.mcp.json` + your install-time config. If it shows as failed, confirm
-Node/`npx` are installed and that `gcloud auth application-default login` (or a
-service-account key) is in place.
+configured this — it comes from `.mcp.json` and uses your local `gcloud`
+credentials (no install config). If it shows as failed, confirm Node/`npx` are
+installed and that `gcloud auth application-default login` (or a service-account
+key) is in place.
 
 ## 5. Test the production gate (the important one)
 

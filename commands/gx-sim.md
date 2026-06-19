@@ -18,4 +18,4 @@ This is a SIMULATION. You must:
 
 Then **STOP**. Do not apply anything. Do not write `.gainwix/deploy-context.json`. Do not call any deploy tool. End by stating exactly what `/gx-gcp-deploy` would do if I ran it.
 
-Project: `${user_config.gcp_project}` · Region: `${user_config.gcp_region}`.
+No install config to read: resolve the project + region read-only during step 3 so you can read current cloud state (don't create or change anything).

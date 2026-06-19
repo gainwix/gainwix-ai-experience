@@ -1,35 +1,9 @@
 {
   "name": "gainwix",
-  "description": "An AI teammate that deploys your app to Google Cloud Platform without you needing to understand cloud infrastructure. Say \"deploy\" — it does the heavy lifting.",
+  "description": "Agentic dev-workflow slash commands for Claude Code — plan, build, QA, and ship software with AI, all from /gx. Deploying to Google Cloud Run is one of the commands.",
   "author": {
     "name": "GainWix",
     "email": "hello@gainwix.com"
   },
-  "keywords": ["deployment", "gcp", "cloud-run", "devops", "workmate"],
-  "userConfig": {
-    "gcp_project": {
-      "type": "string",
-      "title": "GCP project ID (optional)",
-      "description": "The Google Cloud project to deploy into (e.g. my-app-prod). Optional — leave it empty and /gx-gcp-deploy will set one up when you deploy.",
-      "required": false
-    },
-    "gcp_region": {
-      "type": "string",
-      "title": "GCP region",
-      "description": "Default Cloud Run region for deployments.",
-      "default": "us-central1"
-    },
-    "gcp_credentials": {
-      "type": "file",
-      "title": "Service account key (optional)",
-      "description": "Path to a service-account JSON key. Leave empty to use your local gcloud Application Default Credentials.",
-      "sensitive": true
-    },
-    "default_mode": {
-      "type": "string",
-      "title": "Trust mode",
-      "description": "\"suggest\" = every gate is interactive (recommended). \"auto\" = Gate 1 may auto-approve, but production promotion always asks.",
-      "default": "suggest"
-    }
-  }
+  "keywords": ["dev-workflow", "slash-commands", "agentic", "automation", "qa", "deployment", "cloud-run"]
 }

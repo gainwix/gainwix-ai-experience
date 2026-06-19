@@ -2,12 +2,7 @@
   "mcpServers": {
     "cloud-run": {
       "command": "npx",
-      "args": ["-y", "@google-cloud/cloud-run-mcp"],
-      "env": {
-        "GOOGLE_CLOUD_PROJECT": "${user_config.gcp_project}",
-        "GOOGLE_CLOUD_REGION": "${user_config.gcp_region}",
-        "GOOGLE_APPLICATION_CREDENTIALS": "${user_config.gcp_credentials}"
-      }
+      "args": ["-y", "@google-cloud/cloud-run-mcp"]
     }
   }
 }
