@@ -32,7 +32,7 @@ Issues (GitHub `queued` kanban):
 
 Deploy (one of the features):
 - `/gx-sim` — dry run: show the deploy plan (infra + cost + diff) and stop. Never applies.
-- `/gx-gcp-deploy` — ship to Google Cloud Run: it signs you in, picks/creates a project, then plan → approve → deploy → document. (`/gx-deploy` is an alias.)
+- `/gx-gcp-deploy` — ship to Google Cloud: picks the target (static site → bucket, app → Cloud Run), signs you in, then plan → approve → deploy → document. (`/gx-deploy` is an alias.)
 
 Hygiene:
 - `/gx-sweep` — prune old QA reports + merged branches.

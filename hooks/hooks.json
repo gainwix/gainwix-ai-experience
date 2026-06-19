@@ -10,6 +10,16 @@
             "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/gate-production.js"]
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/gate-production.js"]
+          }
+        ]
       }
     ]
   }

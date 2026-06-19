@@ -3,19 +3,23 @@
  * GainWix — GATE 2: production promotion gate.
  *
  * This is the conscience of the GainWix deploy command. It runs as a PreToolUse
- * hook on every Cloud Run MCP deploy tool call (mcp__cloud-run__deploy*).
- *
- * It enforces — deterministically, independent of the agent and independent of
- * the trust mode — that a deploy classified as PRODUCTION cannot proceed without
- * an explicit, interactive human approval. It does this by returning
+ * hook and enforces — deterministically, independent of the agent and the trust
+ * mode — that a deploy classified as PRODUCTION cannot proceed without an
+ * explicit, interactive human approval. It does this by returning
  * permissionDecision "ask", which forces Claude Code to surface a permission
- * prompt to the human. Auto mode CANNOT satisfy an "ask" on its own, so Gate 2
- * holds even in Auto mode. This is a guarantee, not a polite suggestion.
+ * prompt. Auto mode CANNOT satisfy an "ask" on its own, so Gate 2 holds even in
+ * Auto mode. This is a guarantee, not a polite suggestion.
+ *
+ * It covers BOTH deploy paths:
+ *   - Cloud Run  — the MCP deploy tools (mcp__cloud-run__deploy*).
+ *   - Static site — `gcloud storage` / `gsutil` commands that publish to a bucket
+ *                   (upload, make-public, or set website config), run via Bash.
+ * Any other tool call (incl. ordinary Bash) is ignored — the hook defers
+ * instantly so it never interferes with normal work.
  *
  * Classification source of truth: <cwd>/.gainwix/deploy-context.json, written by
- * the workmate during planning. Fail-safe posture: if that file is missing,
- * unreadable, malformed, or the deploy's own inputs look production-like, we
- * treat the deploy as production and gate it.
+ * the workmate during planning. Fail-safe: if that file is missing, unreadable,
+ * malformed, or the deploy inputs look production-like, treat it as production.
  */
 
 const fs = require("fs");
@@ -42,15 +46,28 @@ function decision(permissionDecision, reason) {
   process.exit(0);
 }
 
+// Defer: no decision — normal permission flow (and trust mode) decides.
 function defer() {
-  // No decision: let the normal permission flow (and trust mode) decide.
   process.exit(0);
+}
+
+// Is this Bash command a static-site publish to a Cloud Storage bucket?
+// (upload to gs://, make a bucket public, or set its website config)
+function isBucketPublish(command) {
+  if (typeof command !== "string") return false;
+  const c = command;
+  return (
+    /\bgcloud\s+storage\s+(rsync|cp)\b[\s\S]*gs:\/\//.test(c) ||
+    /\bgcloud\s+storage\s+buckets\s+add-iam-policy-binding\b/.test(c) ||
+    /\bgcloud\s+storage\s+buckets\s+update\b[\s\S]*--web-/.test(c) ||
+    /\bgsutil\b[\s\S]*\b(rsync|cp)\b[\s\S]*gs:\/\//.test(c) ||
+    /\bgsutil\s+(iam|web)\b/.test(c)
+  );
 }
 
 function looksProductionFromInput(toolInput) {
   try {
-    const blob = JSON.stringify(toolInput || {}).toLowerCase();
-    return /prod(uction)?/.test(blob);
+    return /prod(uction)?/i.test(JSON.stringify(toolInput || {}));
   } catch {
     return false;
   }
@@ -60,15 +77,23 @@ let payload = {};
 try {
   payload = JSON.parse(readStdin() || "{}");
 } catch {
-  // Can't even parse the event — fail safe and gate.
-  decision(
-    "ask",
-    "GATE 2 (GainWix): could not read the deploy event, so production safety is enforced. Approve only if you intend to deploy."
-  );
+  payload = {};
 }
 
-const cwd = payload.cwd || process.cwd();
+const toolName = payload.tool_name || "";
 const toolInput = payload.tool_input || {};
+
+// Decide whether this call is a deploy we must gate.
+const isCloudRunDeploy = /^mcp__cloud-run__deploy/.test(toolName);
+const isStaticPublish = toolName === "Bash" && isBucketPublish(toolInput.command);
+
+if (!isCloudRunDeploy && !isStaticPublish) {
+  // Not a deploy — get out of the way immediately.
+  defer();
+}
+
+const kind = isCloudRunDeploy ? "Cloud Run" : "static-site bucket";
+const cwd = payload.cwd || process.cwd();
 const contextPath = path.join(cwd, ".gainwix", "deploy-context.json");
 
 let target = null;
@@ -79,17 +104,15 @@ try {
     target = ctx.target.trim().toLowerCase();
   }
 } catch {
-  // missing / unreadable / malformed -> handled below as fail-safe
+  // missing / unreadable / malformed -> fail safe below
 }
 
-const svc = ctx && ctx.service ? ` service "${ctx.service}"` : "";
+const svc = ctx && ctx.service ? ` "${ctx.service}"` : "";
 
-// Gate when: explicitly production, OR no honest classification was written,
-// OR the deploy inputs themselves look production-like.
 if (target === "production") {
   decision(
     "ask",
-    `GATE 2 (GainWix): promoting${svc} to PRODUCTION. Explicit human approval is required and cannot be auto-approved. Reason on file: ${
+    `GATE 2 (GainWix): promoting${svc} to PRODUCTION (${kind}). Explicit human approval is required and cannot be auto-approved. Reason on file: ${
       (ctx && ctx.reason) || "n/a"
     }`
   );
@@ -98,17 +121,16 @@ if (target === "production") {
 if (target !== "non-production") {
   decision(
     "ask",
-    "GATE 2 (GainWix): no trustworthy non-production classification found (.gainwix/deploy-context.json missing or invalid). Treating this deploy as production and requiring explicit human approval."
+    `GATE 2 (GainWix): no trustworthy non-production classification found (.gainwix/deploy-context.json missing or invalid) for this ${kind} deploy. Treating it as production and requiring explicit human approval.`
   );
 }
 
 if (looksProductionFromInput(toolInput)) {
   decision(
     "ask",
-    "GATE 2 (GainWix): the deploy target looks production-like (matched /prod/ in its inputs). Requiring explicit human approval regardless of the recorded classification."
+    `GATE 2 (GainWix): this ${kind} deploy looks production-like (matched /prod/ in its inputs). Requiring explicit human approval regardless of the recorded classification.`
   );
 }
 
 // Classified non-production and nothing looks production -> defer to normal flow.
-// In Suggest mode the user still confirms; in Auto mode this may auto-approve.
 defer();

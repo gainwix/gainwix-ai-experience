@@ -101,6 +101,18 @@ rm -f /tmp/gxtest/.gainwix/deploy-context.json
 printf '{"cwd":"/tmp/gxtest","tool_name":"mcp__cloud-run__deploy_local_folder","tool_input":{}}' \
   | node hooks/gate-production.js; echo "exit=$?"
 # Expect: JSON with "permissionDecision":"ask", exit=0
+
+# Static-site (bucket) path is gated too — a production gcloud-storage publish asks
+printf '{"target":"production","kind":"bucket","service":"my-site"}' \
+  > /tmp/gxtest/.gainwix/deploy-context.json
+printf '{"cwd":"/tmp/gxtest","tool_name":"Bash","tool_input":{"command":"gcloud storage rsync dist gs://my-site --recursive"}}' \
+  | node hooks/gate-production.js; echo "exit=$?"
+# Expect: JSON with "permissionDecision":"ask", exit=0
+
+# ...but ordinary Bash is never touched (no output, exit 0)
+printf '{"cwd":"/tmp/gxtest","tool_name":"Bash","tool_input":{"command":"npm test"}}' \
+  | node hooks/gate-production.js; echo "exit=$?"
+# Expect: no JSON output, exit=0
 ```
 
 End to end: in a sandbox app repo, run `/gx-gcp-deploy`, let the workmate

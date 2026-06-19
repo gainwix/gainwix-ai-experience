@@ -72,12 +72,12 @@ Deploying is just one command, but it carries real weight, so here's the flow. (
 
 1. **Pre-flight git hygiene** — clean tree, merge to `main`, cut a release branch (confirmed with you first).
 2. **Ensure GCP access** — resolves sign-in + project + region for you (browser approval only; never terminal commands). This command owns GCP setup — `/gx-init` doesn't touch it.
-3. **Detect & classify** — your language/framework/runtime/port/env, and whether this is production.
-4. **Plan** — the GCP infra needed (Cloud Run first; flags any database/networking/IAM), an estimated monthly cost, and the diff from what's already deployed.
+3. **Detect, pick target & classify** — your language/framework/runtime/port/env; the right target (a **static site → Cloud Storage bucket**, a **containerized app → Cloud Run**); and whether this is production.
+4. **Plan** — the GCP infra for that target (a Cloud Run service, or a public Cloud Storage bucket; flags any database/networking/IAM), an estimated monthly cost, and the diff from what's already deployed.
 5. **Ask the minimum** — at most 2–3 questions, recommended option pre-selected.
 6. **Gate 1 — plan approval** — nothing is applied until you approve.
-7. **Execute** — provisions and deploys through the Cloud Run MCP. No console, ever.
-8. **Gate 2 — production promotion** — a mandatory human approval, enforced by a hook even in Auto mode.
+7. **Execute** — Cloud Run through the MCP, or a static site to a public Cloud Storage bucket via `gcloud`. No console, ever.
+8. **Gate 2 — production promotion** — a mandatory human approval, enforced by a hook even in Auto mode — for **both** the Cloud Run and bucket paths.
 9. **Artifact** — writes `created-deployment.md`: every resource, the live URL(s), how to roll back, how to scale.
 
 Monitoring is intentionally **out of scope** for this build (the artifact leaves a marked `TODO`).
@@ -118,7 +118,7 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
 | `/gx-sim` | ✅ | Dry-run deploy plan (Gate 1 in isolation). Never applies. |
-| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — handles its own GCP access (sign-in + project + region). |
+| `/gx-gcp-deploy` (`/gx-deploy`) | ✅ | Full deploy flow — picks the target (static site → bucket, app → Cloud Run) and handles its own GCP access. |
 
 **Coming soon**
 

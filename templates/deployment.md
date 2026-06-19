@@ -6,13 +6,19 @@
 - **Deployed at:** <timestamp>
 - **Deployed by:** <git user / who ran it>
 - **Classification:** <production | non-production>
+- **Target:** <Cloud Run service | Static site (Cloud Storage bucket)>
 - **GCP project:** <project-id>
 - **Region:** <region>
 - **Release branch / commit:** <branch @ short-sha>
 
 ## Live URL(s)
 
-- <service name> → <https://...run.app>
+- Cloud Run: <service name> → <https://...run.app>
+- Static bucket: <bucket> → `https://storage.googleapis.com/<bucket>/index.html`
+
+<!-- Keep the line that matches this deployment's target; delete the other. -->
+
+(Fill in only the rows below that apply to this deployment's target; delete the rest.)
 
 ## Resources provisioned
 
@@ -21,6 +27,7 @@ List every resource created or changed, in plain terms.
 | Resource | Type | Name | Notes |
 | :------- | :--- | :--- | :---- |
 | Cloud Run service | run.googleapis.com | <name> | <port, image, build method> |
+| Storage bucket (static site) | storage.googleapis.com | <bucket> | public-read; web pages index.html / 404.html |
 | <database, if any> | | | |
 | <networking, if any> | | | |
 | <IAM binding, if any> | | | |
@@ -36,8 +43,8 @@ List every resource created or changed, in plain terms.
 
 ## How to roll back
 
-Cloud Run keeps every previous revision. Rolling back = pointing traffic at the
-previous revision (no rebuild needed).
+**Cloud Run** keeps every previous revision. Rolling back = pointing traffic at
+the previous revision (no rebuild needed).
 
 ```bash
 # See revisions
@@ -47,6 +54,15 @@ gcloud run revisions list --service <name> --region <region> --project <project>
 gcloud run services update-traffic <name> \
   --region <region> --project <project> \
   --to-revisions <REVISION>=100
+```
+
+**Static bucket:** re-upload a known-good build. Turn on object versioning so
+overwrites stay recoverable.
+
+```bash
+gcloud storage buckets update gs://<bucket> --versioning          # one-time
+gcloud storage rsync <previous-build-dir> gs://<bucket> \
+  --recursive --delete-unmatched-destination-objects
 ```
 
 ## How to scale
@@ -60,6 +76,10 @@ gcloud run services update <name> \
 
 - **Scale to zero:** set `--min-instances 0` (cheapest; cold starts on first hit).
 - **Always warm:** set `--min-instances 1+`.
+
+**Static bucket:** nothing to scale — Cloud Storage serves the files for you. Add
+Cloud CDN + an HTTPS load balancer (or move to Firebase Hosting) if you want a
+custom domain and edge caching.
 
 ## TODO: monitoring
 
