@@ -61,12 +61,21 @@ $GX show    [--stage backlog]  # the queue, in pick-up order
 $GX ready                      # ⭐ the ONE wave that can start now
 $GX add     --title "…" [--detail …] [--deps "AB-001 AB-002"]
             [--pri P0|P1|P2] [--size S|M|L] [--lane auth] [--spec "Spec §4"]
-$GX move    --id AB-003 --to in-progress|completed [--issue URL] [--pr-link URL]
+$GX move    --id AB-003 --to in-progress|completed|backlog [--issue URL] [--pr-link URL]
+            #  ⛔ `--to backlog` is the put-back: a run that failed returns
+            #  its item so the next one can pick it up. Every failure path
+            #  depends on it.
 $GX rebuild                    # recompute every stage, after a merge or a hand-edit
 ```
 
 ⚠ **Add `--component <name>` to any of them** when a repo has more than one and
 you do not want to change the remembered choice.
+
+⚠ **`$GX` exits non-zero on refusal, and one of those refusals is benign.**
+Moving an item to the stage it is already in prints *"already in \<stage\>"* and
+exits 1. A driver should treat every other non-zero exit as a hard stop and
+ignore that one — it means two parties made the same move, not that anything is
+broken.
 
 ---
 

@@ -31,7 +31,7 @@ simply asks to **add to the backlog / queue** — appending a raw idea to
 or a task to the backlog (`.gainwix/<component>/backlog.html`) — that is a lightweight queue edit, not a code change.
 Just edit the queue file directly (commit + push it to `develop` like a queue
 mutation if appropriate). Do **NOT** spin up this `/gx-go` workflow for it: no
-worktree/PR ceremony, **no `.gainwix/<component>/changes/*.md` record, and no `.gainwix/<component>/.gainwix/<component>/CHANGELOG.md` entry**.
+worktree/PR ceremony, **no `.gainwix/<component>/changes/*.md` record, and no `.gainwix/<component>/CHANGELOG.md` entry**.
 The change record documents *executed* work, never merely *queued* work.
 (`/gx-next` is the command that turns a queued `.gainwix/<component>/inbox.md` idea into a
 the backlog (`.gainwix/<component>/backlog.html`) task; it likewise produces no change record.)
@@ -56,6 +56,15 @@ them — ask which, then `$GX use --component <name>`. ⛔ **Never guess between
 components:** a task written into the wrong backlog is silent and expensive to
 unpick.
 
+⛔ **Then bind the name, because later steps interpolate it:**
+
+```bash
+COMPONENT=<the resolved component>
+```
+
+⚠ **Without this, `RECORDS=".gainwix/${COMPONENT}/changes"` in Step 1 expands to
+`.gainwix//changes`** and the run's whole record lands somewhere nobody looks.
+
 **0c. Determine the task + the mode:**
 
 - **Backlog mode** — `/gx-go` with no inline task. Ask the tool what can start:
@@ -73,8 +82,12 @@ unpick.
   Then mark it picked up, before any code changes:
 
   ```bash
-  $GX move --id <SERIAL> --to in-progress --issue <issue-url>
+  $GX move --id <SERIAL> --to in-progress [--issue <issue-url>]
   ```
+
+  ⚠ **`--issue` only if the item already tracks one.** This move happens before
+  any code changes; the issue this run opens does not exist until Step 5. The PR
+  link is written later, on the `completed` move.
 
   ⛔ **That is the dequeue, and it happens now rather than at merge time.** An
   item in `in-progress.html` is *already taken*, so a parallel session will not
@@ -124,7 +137,7 @@ CHANGE_FILE="${RECORDS}/${TS}-change.md"
 ```
 
 ⚠ **Records are per component** — `.gainwix/<component>/changes/`, indexed by
-`.gainwix/<component>/.gainwix/<component>/CHANGELOG.md`. A repo that builds four things keeps four
+`.gainwix/<component>/CHANGELOG.md`. A repo that builds four things keeps four
 histories, not one mixed pile.
 
 Create `changes/<TS>-change.md` from the **skeleton in Step 5** with the
@@ -237,7 +250,7 @@ Patch the top of the file: set **Ended** = `END_HUMAN`, **Elapsed** =
 human-readable duration, and finalize the Tokens/Tools row. Make sure the
 **Links** section lists every GitHub issue and PR as Markdown links.
 
-Then **append a link to `.gainwix/<component>/.gainwix/<component>/CHANGELOG.md`** (create it if missing) — one Markdown
+Then **append a link to `.gainwix/<component>/CHANGELOG.md`** (create it if missing) — one Markdown
 list item, newest at the top of the list, pointing at the new file:
 
 ```
@@ -253,7 +266,7 @@ Timeline list and the Links lists as you go.
 ```markdown
 # {{TASK_TITLE}}
 
-_{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no the backlog edit)." — omit this line if there's nothing to note}}_
+_{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no backlog edit)." — omit this line if there's nothing to note}}_
 
 | Field | Value |
 |-------|-------|
@@ -299,7 +312,7 @@ _{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no the backlog edit)." — omit
 Print a short roll-up to the operator: the task, the change file path
 (`changes/<TS>-change.md`), the issue + PR URLs, merge SHA(s), test counts,
 and the elapsed time. Mention that the run was recorded to the change file
-(which renders on GitHub) and linked from `.gainwix/<component>/.gainwix/<component>/CHANGELOG.md`.
+(which renders on GitHub) and linked from `.gainwix/<component>/CHANGELOG.md`.
 
 ## Notes
 
@@ -326,7 +339,7 @@ and the elapsed time. Mention that the run was recorded to the change file
   crashed/interrupted run still leaves a partial, useful record.
 - Removing the executed item from the backlog (`.gainwix/<component>/backlog.html`) (so it isn't re-run) happens in
   **backlog mode only**. In **interactive mode** the task came from the prompt,
-  so leave the backlog (`.gainwix/<component>/backlog.html`)'s item list untouched (you still read its autonomy
+  so leave the backlog's item list (`.gainwix/<component>/backlog.html`) untouched (you still read the autonomy
   preamble). Never touch `.gainwix/<component>/inbox.md` in either mode.
 - **Markdown, not HTML** — change files are plain GitHub-Flavored Markdown so
   they render inline on GitHub. Don't use raw HTML/CSS; keep it portable.
