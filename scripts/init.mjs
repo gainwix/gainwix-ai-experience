@@ -159,6 +159,46 @@ export function setCurrent(root, component) {
   return component;
 }
 
+/**
+ * The standing permission `/gx-go` treats as binding.
+ *
+ * ⛔ **This used to live inside `BACKLOG.md`**, above the items — so the queue
+ * file held both the work and the policy about the work, and moving one moved
+ * the other. It is a repo-wide statement of what the operator has pre-approved;
+ * it belongs beside the queues, not inside one of them.
+ */
+export const AUTONOMY = `# Autonomy — what you have pre-approved
+
+Read this before running a task. **It is binding for that run.**
+
+By invoking \`/gx-go\`, \`/gx-sing\` or \`/gx-ping\`, the operator has given explicit
+pre-approval to run the whole workflow end to end without asking again. That
+includes:
+
+- Branching from \`origin/develop\` — this workflow's trunk. **Create a \`develop\`
+  branch if the repo has none**; the workflow standardises on that name.
+- Running the project's build and setup steps — dependency installs, database
+  migrations, code generation — autonomously.
+- Running the test suite, fixing failures, and re-running until green.
+- Committing, pushing, opening the issue and the PR, and squash-merging it.
+
+**Proceed without asking for approval and make reasonable assumptions.**
+
+## ⛔ What is never pre-approved
+
+- **Anything that reaches production.** The production gate asks every time, on
+  every path, in every mode.
+- **Deleting or rewriting somebody's data**, in the repo or anywhere else.
+- **Editing files under \`.gainwix/\` by hand.** Use the tool; it recomputes the
+  dependency order with the change.
+
+## The one rule about finishing
+
+A task is done when it has **merged**, not when it compiles and not when the
+tests pass. Until then it is in progress, and it unblocks nothing that depends
+on it.
+`;
+
 /** The notice that makes "do not edit this by hand" a fact and not a hope. */
 export const README = `# .gainwix
 
@@ -217,6 +257,12 @@ export function create(root, component, prefix, { render, computeWaves }) {
   if (!exists(readme)) {
     fs.writeFileSync(readme, README);
     made.push(".gainwix/README.md");
+  }
+
+  const autonomy = path.join(base, "autonomy.md");
+  if (!exists(autonomy)) {
+    fs.writeFileSync(autonomy, AUTONOMY);
+    made.push(".gainwix/autonomy.md");
   }
 
   for (const stage of ["backlog", "in-progress", "completed"]) {

@@ -3,6 +3,14 @@ description: List the `queued`-labeled GitHub issues, oldest-first (FIFO by crea
 disable-model-invocation: true
 ---
 
+> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
+> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
+> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
+> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
+> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
+> old root paths in the prose below are being rewritten command by command; where
+> one disagrees with that document, **that document wins.**
+
 # /gx-issue-list — list the `queued` issues, oldest-first
 
 `/gx-issue-list` shows the **`queued`** set — the issues `/gx-issue-add` files (or you

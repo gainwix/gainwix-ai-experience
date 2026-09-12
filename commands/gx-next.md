@@ -1,7 +1,15 @@
 ---
-description: Read the first raw action item (leading hyphen) below the "<!-- Add action items below this line -->" marker in ACTION-ITEMS.md, plan it into a detailed executable task, append that task under "## Backlog Items" in BACKLOG.md, and remove the consumed item from ACTION-ITEMS.md. One item per invocation, top-down. Commits + pushes both files to develop.
+description: Take the first raw idea from the inbox, plan it into a detailed executable task, and add it to .gainwix/<component>/backlog.html with its dependencies, priority and size — so the waves recompute around it. One item per invocation, top-down.
 disable-model-invocation: true
 ---
+
+> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
+> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
+> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
+> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
+> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
+> old root paths in the prose below are being rewritten command by command; where
+> one disagrees with that document, **that document wins.**
 
 # /gx-next — plan one ACTION-ITEMS.md entry into a BACKLOG.md task
 
@@ -11,10 +19,27 @@ is now the raw inbox and BACKLOG.md is the planned queue):
 1. You (or the operator) jot **raw ideas** as `- ` bullets in `ACTION-ITEMS.md`,
    below the `<!-- Add action items below this line -->` marker.
 2. **`/gx-next`** takes the **top** raw idea, turns it into a fully-planned,
-   executable **task**, and **appends it to `BACKLOG.md`** under
-   `## Backlog Items`.
-3. **`/gx-go`** later executes the top `BACKLOG.md` task and records a
-   `changes/*.md` change file.
+   executable **task**, and **adds it to the backlog** with the tool:
+
+   ```bash
+   GX="node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs"
+   $GX add --title "<one-line deliverable>" \
+           --detail "<why, goal, steps, done-criteria>" \
+           --deps "<serials this cannot start without>" \
+           --pri P0|P1|P2  --size S|M|L  [--lane <area>]  [--spec "<where it came from>"]
+   ```
+
+   ⭐ **`--deps` is the important one and the easy one to skip.** Sequence comes
+   *only* from dependencies — priority decides what to pick first **within** a
+   wave, never across waves. An item added with no dependencies claims it can
+   start today, so if it cannot, say what it waits on. Look at `$GX show` and
+   name the serials.
+
+   ⚠ **Do not choose the serial.** The tool assigns the next one for that
+   component, and serials are permanent and never reused.
+
+3. **`/gx-go`** later takes the next item from the one wave that can start, and
+   records a change file under `.gainwix/<component>/changes/`.
 
 `/gx-next` processes exactly **one** raw item per invocation, scanning top-down from
 the first item below the marker. Run it again to plan the next one. Do not ask

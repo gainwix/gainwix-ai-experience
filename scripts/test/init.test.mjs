@@ -83,6 +83,7 @@ test("creating a component puts everything under .gainwix and nothing in the roo
 
   for (const f of [
     ".gainwix/README.md",
+    ".gainwix/autonomy.md",
     ".gainwix/admin/backlog.html",
     ".gainwix/admin/in-progress.html",
     ".gainwix/admin/completed.html",
@@ -154,7 +155,8 @@ test("a second component sits beside the first, not on top of it", () => {
   create(root, "api", "API", { render, computeWaves });
   assert.deepEqual(
     fs.readdirSync(path.join(root, ".gainwix")).sort(),
-    ["README.md", "admin", "api"],
+    ["README.md", "admin", "api", "autonomy.md"],
+    "components sit beside each other, under the repo-wide notice and policy",
   );
   assert.equal(
     parseMeta(
