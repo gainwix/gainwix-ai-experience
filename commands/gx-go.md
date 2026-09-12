@@ -1,5 +1,5 @@
 ---
-description: Run a code-changing task end-to-end — branch, build, test, PR, squash-merge — and record it as a timestamped Markdown change file under .gainwix/<component>/changes/ that renders on GitHub. Takes the next item from the one wave that can start, moves it to in-progress on pick-up and to completed on merge. Mandatory for ALL code changes.
+description: Run a code-changing task end-to-end — branch, build, test, PR, squash-merge — and record it as a timestamped Markdown change file under .gainwix/<component>/changes/ that renders on GitHub. Run alone, it takes the next item from the one wave that can start and moves it to in-progress on pick-up and to completed on merge; under /gx-sing or /gx-ping the driver names the item and owns every move. Mandatory for ALL code changes.
 disable-model-invocation: true
 ---
 
@@ -116,10 +116,30 @@ COMPONENT=<the resolved component>
   already in `in-progress`, so `$GX ready` returns **the next wave** — you would
   build something whose foundations have not merged.
 
-  Everything else — the change record, the issue, the build/PR loop — is
-  identical. **Return to the driver:** the branch name, the issue URL, the PR
-  URL, the merge SHA if you merged, and the path of your change record. It
-  cannot get them any other way once you are done.
+  ⛔ **You do not merge.** Ignore step 7 of Step 2. Open the PR and stop — the
+  driver merges, serially, after every team in your group has finished. That
+  serialisation is the only thing keeping concurrent PRs from racing one trunk.
+
+  ⛔ **Skip Step 4 entirely** — the finalize pass and the `CHANGELOG.md` link.
+  **That file is shared**, and two teams appending to it on two branches conflict
+  on every parallel group. The driver writes it once, after it merges you. Do
+  still write your change record **append-as-you-go** during the run: if you
+  crash, that partial file is the only account of what happened.
+
+  ⛔ **Skip the kanban body edit** in Step 4b for the same reason: it is a
+  read-modify-write of one GitHub issue that two teams can race. Opening **your
+  own** issue in Step 5 is still yours.
+
+  ⚠ **The driver must give you two things beyond the item**, because
+  `${CLAUDE_PLUGIN_ROOT}` is a shell expansion that does not survive into a prompt
+  and every command block below uses it: **the resolved `$GX` command line** and
+  **the component name**. Without them Step 0b cannot bind `COMPONENT`, and your
+  whole record lands in `.gainwix//changes`. If they were not given, **ask before
+  building** — do not guess.
+
+  **Return to the driver:** the branch name, the issue URL, the PR URL, and the
+  path of your change record. It cannot get them any other way once you are
+  done.
 
 ⚠ **Backlog mode is for a person running `/gx-go` on its own.** The drivers use
 driven mode above. A driver that let `/gx-go` choose would re-pick an item that had just
@@ -200,7 +220,8 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
    tracked issue as the change's issue.
 6. Open a PR against `develop` (reference the **new** issue from step 5 with
    `Closes #<new>` when one was created).
-7. Squash-merge the PR (`--squash --delete-branch`) once green.
+7. Squash-merge the PR (`--squash --delete-branch`) once green. ⛔ **Not in
+   driven mode** — there the driver merges.
 
 A task may produce **more than one PR** — record every issue and PR.
 
@@ -221,10 +242,11 @@ PR `Closes #<new>`):
     `- [ ] #<new>` line under a `## Sub-issues (opened by /gx-go)` heading (create the
     heading if absent), then write it back:
     ```bash
-    gh issue view <N> --json body -q .body > /tmp/kanban-body.md
+    KB=$(mktemp -t kanban-body)   # ⛔ never a fixed path: two runs at once collide
+    gh issue view <N> --json body -q .body > "$KB"
     # append "- [ ] #<new>" under a "## Sub-issues (opened by /gx-go)" heading
     # (add the heading first if the body has none), then:
-    gh issue edit <N> --body-file /tmp/kanban-body.md
+    gh issue edit <N> --body-file "$KB"
     ```
   - (optional) `gh issue comment <N> --body "Subordinate issue #<new> opened by /gx-go for this change."`
 - **Step 6's PR `Closes #<new>`** (the subordinate) — **NEVER `Closes #<N>`**. Leave

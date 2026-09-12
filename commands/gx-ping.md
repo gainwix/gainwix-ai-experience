@@ -121,6 +121,11 @@ migration. Put items that share a file — or that both add a migration — in
 **different groups**. Cap each group at **5**. Be conservative: when unsure
 whether two overlap, treat them as overlapping.
 
+⚠ **Two items that track the SAME kanban issue also go in different groups.**
+The overlap that matters is not only repo files: `/gx-go`'s kanban step is a
+read-modify-write of one issue body, and two teams doing it at once lose one of
+the two edits with nothing to show for it.
+
 ⛔ **A conflict delays an item to a later group in this run. It never defers it
 to a later run, and it never pulls an item forward from the next wave.** Log the
 grouping and why.
@@ -155,11 +160,22 @@ e.g. *"read `<resolved>/commands/gx-go.md` and follow it in driven mode."*
 `lane`, straight from the captured `$GX ready`. ⛔ A title alone is a headline,
 and a team given only that builds whatever it suggests.
 
+⛔ **And two things beyond the item, or the team fails silently:** the **resolved
+`$GX` command line** and the **component name**. Every command block inside
+`gx-go.md` uses `${CLAUDE_PLUGIN_ROOT}`, which is unset in a subagent — including
+the Step 0b that binds `COMPONENT`. Without it the run's whole record lands in
+`.gainwix//changes`.
+
 Each team runs the `/gx-go` workflow in **driven mode**, implementation only —
 branch → implement → the project's test and lint commands green (per
 `.gainwix/autonomy.md`) → commit → push → **open its issue** → open its PR — and
 **STOPS before merging.** ⚠ The issue is `/gx-go`'s own step and stays the team's
 job; only the merge is withheld.
+
+⛔ **Driven mode does not merge, does not run `/gx-go` Step 4, and does not edit
+the kanban issue body** — `CHANGELOG.md` and a tracked issue's body are **shared**,
+and two teams writing either at once conflict. The driver does all three after
+merging.
 
 ⛔ **Each team must return: the branch name, the issue URL, the PR URL, and the
 path of its `.gainwix/<component>/changes/<ts>-change.md`.** The driver merges and

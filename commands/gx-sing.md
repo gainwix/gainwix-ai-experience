@@ -116,17 +116,25 @@ green, so at pick-up there is normally no URL.
 
 Then run the `/gx-go` workflow (`${CLAUDE_PLUGIN_ROOT}/commands/gx-go.md`) in
 **driven mode** on that item — worktree → build → test → commit → push → issue →
-PR → squash-merge, writing `.gainwix/<component>/changes/<ts>-change.md` and
-linking it in `.gainwix/<component>/CHANGELOG.md`.
+PR — writing `.gainwix/<component>/changes/<ts>-change.md` as it goes.
+
+⛔ **Then YOU merge**, and only then: rebase on the latest `origin/develop`,
+squash-merge, delete the branch. Finalize the change record (issue/PR links,
+timing) and link it in `.gainwix/<component>/CHANGELOG.md` yourself. ⭐ **Driven
+mode never merges and never touches `CHANGELOG.md`, in either driver** — one
+rule, so nothing has to reason about which driver it is under.
 
 ⛔ **Hand over the whole item, not its title.** `$GX ready` returns `detail`,
 `spec`, `deps` and `lane` beside `id` and `title` — pass them all. A title is a
 headline; the detail is the brief. A run given only the headline builds whatever
 the headline suggests, and reports success.
 
-⭐ **`/gx-go` owns the merge here** — unlike `/gx-ping`, where the driver merges.
-One item is in flight at a time, so there is nothing to serialise. **Require back
-from it:** the branch name, the issue URL, the PR URL, the merge SHA, and the
+⚠ **Give it two things beyond the item:** the **resolved** `$GX` command line and
+the **component name**. `${CLAUDE_PLUGIN_ROOT}` does not survive into a subagent
+prompt, and without `COMPONENT` bound, `/gx-go`'s records land in
+`.gainwix//changes`.
+
+**Require back from it:** the branch name, the issue URL, the PR URL, and the
 change-record path — the report prints them.
 
 ```bash
@@ -262,8 +270,7 @@ operator acts on each differently.
 
 - **`/gx-sing` vs `/gx-ping`.** Same scope — one wave, and both plan up to 5
   inbox items first. Two real differences: `/gx-sing` works the items one at a
-  time (so `/gx-go` merges each itself), `/gx-ping` builds them together and the
-  **driver** merges serially afterwards. For a wave of one they do the same work.
+  time, `/gx-ping` builds them together — and in both, **the driver merges.** For a wave of one they do the same work.
   Use `/gx-sing` when the wave's items all touch the same files anyway, or to
   avoid the token cost of parallel teams.
 - **No inbox clearing dance.** `/gx-go` never touches
