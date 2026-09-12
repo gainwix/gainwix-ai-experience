@@ -28,8 +28,8 @@ disable-model-invocation: true
    (a worktree still held the local branch and the delete step aborted), or when
    branches were merged from another machine/session.
 
-`/gx-sweep` is **operational, not a `/gx-go` change**: it writes **no** `changes/*.md`
-record and **no** `CHANGELOG.md` entry, and does **not** run the `/gx-go` workflow.
+`/gx-sweep` is **operational, not a `/gx-go` change**: it writes **no** `.gainwix/<component>/changes/*.md`
+record and **no** `.gainwix/<component>/CHANGELOG.md` entry, and does **not** run the `/gx-go` workflow.
 Phase 0 makes ONE small commit (it touches tracked report files + `RUN-LOG.md` —
 same spirit as `/gx-qa` / `/gx-qbugs`, which commit their operational artifacts
 directly to `develop`); Phase 1 makes no commit at all (it only mutates remote +

@@ -111,6 +111,6 @@ subsection per role.>
 > Group features into epics aligned to the components and workflows, and order
 > them so foundational capabilities (auth, core entities/roles, the central data
 > model) come before the workflows that depend on them. The output should be
-> complete enough to seed `ACTION-ITEMS.md` for the GainWix dev workflow.
+> complete enough to seed `.gainwix/<component>/inbox.md` for the GainWix dev workflow.
 > (`/gx-about` runs this prompt for you and writes the distilled result into
-> `ACTION-ITEMS.md`; then `/gx-next` → `/gx-go` plan and ship each item.)
+> the inbox; then `/gx-next` → `/gx-go` plan and ship each item.)

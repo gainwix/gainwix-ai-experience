@@ -28,14 +28,14 @@ artifacts (the new `RUN-REPORT-<ts>.html`, its machine-readable
 (it is gitignored — a full run is ~30 MB of PNGs; screenshots are LOCAL run
 evidence the HTML links relatively, so they render locally right after a run, not
 on GitHub). It does **NOT** run the `/gx-go`
-workflow, does **NOT** write a `changes/*.md` record, and does **NOT** add a
-`CHANGELOG.md` entry. (Building or modifying the `/gx-qa` machinery — the runner, the
+workflow, does **NOT** write a `.gainwix/<component>/changes/*.md` record, and does **NOT** add a
+`.gainwix/<component>/CHANGELOG.md` entry. (Building or modifying the `/gx-qa` machinery — the runner, the
 report generator, this recipe — IS a normal `/gx-go` code change; only *running* a
 QA pass is operational.)
 
 ## `qa/QA.md` is a PERSISTENT REGRESSION SUITE (read first)
 
-Unlike `BACKLOG.md` — whose top item `/gx-go` **dequeues** as it ships — `qa/QA.md`
+Unlike the backlog (`.gainwix/<component>/backlog.html`) — whose top item `/gx-go` **dequeues** as it ships — `qa/QA.md`
 is a **persistent regression suite**. Every `/gx-qa` invocation runs **ALL** the
 workflows under `## QA Workflows`, in document order, and **NEVER removes**
 them: `/gx-qa` only ever *reads* `qa/QA.md`, never edits it. The same suite is
@@ -250,12 +250,12 @@ git push origin develop
 ```
 
 (Commit only when there is a real report to commit; if `/gx-qa` aborted on an empty
-`qa/QA.md`, there is nothing to commit.) Do **not** create a `changes/*.md` and do
-**not** touch `CHANGELOG.md`.
+`qa/QA.md`, there is nothing to commit.) Do **not** create a `.gainwix/<component>/changes/*.md` and do
+**not** touch `.gainwix/<component>/CHANGELOG.md`.
 
 ## Step 5b — Advance the issue kanban (`WIP` → `DONE`)
 
-**Operational, like the qa-artifact commit** — no `changes/*.md`, no `/gx-go`. This
+**Operational, like the qa-artifact commit** — no `.gainwix/<component>/changes/*.md`, no `/gx-go`. This
 closes the loop on the issue kanban (`queued`→`WIP`→`DONE`): a tracked kanban issue
 sits at `WIP` (moved there by `/gx-next`) while `/gx-go` ships its work as SUBORDINATE
 issues; once all those subordinates are closed AND QA is green, the kanban issue is
@@ -293,7 +293,7 @@ done
   advanced** to `DONE` (and which `WIP` issues were left, with why — failures in
   the run, or subordinates still open).
 - This is a **remote GitHub op** + clearly OPERATIONAL (like `/gx-qbugs` labeling): no
-  `changes/*.md`, no `CHANGELOG.md`, no `/gx-go` workflow.
+  `.gainwix/<component>/changes/*.md`, no `.gainwix/<component>/CHANGELOG.md`, no `/gx-go` workflow.
 
 ## Step 6 — Tear down
 
@@ -307,7 +307,7 @@ Print: workflows run, pass/fail counts, the report path
 (`qa/RUN-REPORT-<ts>.html`) + its `qa/RUN-REPORT-<ts>.json` sidecar +
 `RUN-LOG.md` link, and — for any failure — the located root cause (step / route /
 component / endpoint+status, frontend vs backend). Mention the run was committed
-to develop as an operational `/gx-qa` run (no `changes/*.md`, no CHANGELOG entry).
+to develop as an operational `/gx-qa` run (no `.gainwix/<component>/changes/*.md`, no CHANGELOG entry).
 On a **green** run, also report the kanban sweep from Step 5b: which `WIP` issues
 advanced to `DONE` (all subordinates closed) and which stayed `WIP` (subordinates
 still open). If there were failures, suggest running **`/gx-qbugs`** to file them as
@@ -336,7 +336,7 @@ still open). If there were failures, suggest running **`/gx-qbugs`** to file the
   right after a run (not on GitHub). The committed HTML summary + located errors +
   the JSON sidecar preserve the durable results.
 - `qa/RUN-LOG.md` — newest-first index linking each report (the QA analog of
-  `CHANGELOG.md`). **Note:** this file was renamed from `RUNLOG.md` → `RUN-LOG.md`;
+  `.gainwix/<component>/CHANGELOG.md`). **Note:** this file was renamed from `RUNLOG.md` → `RUN-LOG.md`;
   the runner writes/prepends `qa/RUN-LOG.md` (older run reports/CHANGELOG history may
   still reference the former `RUNLOG.md` name).
 - `.gitignore` COMMITS the small artifacts (HTML report + `.json` sidecar +
@@ -353,7 +353,7 @@ still open). If there were failures, suggest running **`/gx-qbugs`** to file the
   `/gx-next` adds `WIP`; `/gx-qa`/`/gx-qbugs` add `DONE` + close). A red run never sweeps.
 - It pairs naturally with **`/gx-qbugs`** — after a `/gx-qa` run, `/gx-qbugs` reads the
   `qa/RUN-REPORT-<ts>.json` sidecar and files each FAILED workflow as a `bug`
-  Issue + an `ACTION-ITEMS.md` fix task (then `/gx-next`/`/gx-sing`/`/gx-ping` fix them via
+  Issue + an fix idea in `.gainwix/<component>/inbox.md` (then `/gx-next`/`/gx-sing`/`/gx-ping` fix them via
   `/gx-go`). The loop: QA → file → fix → re-QA.
 - It pairs naturally with `/gx-sweep` (run after merges to clean up branches).
 - Deterministic browser engine = **Playwright/chromium**. The

@@ -281,6 +281,27 @@ export function create(root, component, prefix, { render, computeWaves }) {
     made.push(`.gainwix/${component}/${stage}.html`);
   }
 
+  const inbox = path.join(dir, "inbox.md");
+  if (!exists(inbox)) {
+    fs.writeFileSync(
+      inbox,
+      `# Inbox — ${component}
+
+Raw ideas, one per \`- \` line, newest at the bottom. Nothing here is planned
+yet: no dependencies, no size, no serial.
+
+\`/gx-next\` takes the top one, plans it, and adds it to the backlog with the
+dependencies that decide when it can start. It is removed from here as it goes.
+
+⚠ **This is the one file under \`.gainwix/\` that is yours to type in.**
+Everything else is written by the tools and recomputed on every run.
+
+<!-- Add ideas below this line -->
+`,
+    );
+    made.push(`.gainwix/${component}/inbox.md`);
+  }
+
   const changelog = path.join(dir, "CHANGELOG.md");
   if (!exists(changelog)) {
     fs.writeFileSync(

@@ -1,7 +1,7 @@
 # QA
 
 The QA backlog + operating contract for `/gx-qa` — the QA-side analog of
-`BACKLOG.md`. The **read-first preamble** below is the contract every `/gx-qa`
+the backlog. The **read-first preamble** below is the contract every `/gx-qa`
 run follows; the **`## QA Workflows`** section at the bottom is the work list the
 runner chomps through, top-down.
 
@@ -15,7 +15,7 @@ screenshot → report → triage.
 
 **How `/gx-qa` consumes this file.** This is a **persistent regression suite**:
 every `/gx-qa` run executes **ALL** the workflows under `## QA Workflows`, in
-document order, and **never removes them** (unlike `BACKLOG.md`, whose items
+document order, and **never removes them** (unlike the backlog, whose items
 `/gx-go` dequeues). Each workflow declares a **`Mode:`** of `parallel` or
 `serial` (default `serial`): the runner executes the parallel group first
 (concurrently, each in its own isolated browser context), then the serial group

@@ -11,12 +11,12 @@ disable-model-invocation: true
 > old root paths in the prose below are being rewritten command by command; where
 > one disagrees with that document, **that document wins.**
 
-# /gx-next — plan one ACTION-ITEMS.md entry into a BACKLOG.md task
+# /gx-next — plan one .gainwix/<component>/inbox.md entry into a the backlog task
 
-The pipeline (note: this is the **reverse** of the old `/gx-next` — ACTION-ITEMS.md
-is now the raw inbox and BACKLOG.md is the planned queue):
+The pipeline (note: this is the **reverse** of the old `/gx-next` — .gainwix/<component>/inbox.md
+is now the raw inbox and the backlog is the planned queue):
 
-1. You (or the operator) jot **raw ideas** as `- ` bullets in `ACTION-ITEMS.md`,
+1. You (or the operator) jot **raw ideas** as `- ` bullets in `.gainwix/<component>/inbox.md`,
    below the `<!-- Add action items below this line -->` marker.
 2. **`/gx-next`** takes the **top** raw idea, turns it into a fully-planned,
    executable **task**, and **adds it to the backlog** with the tool:
@@ -59,7 +59,7 @@ for confirmation — the operator invoked `/gx-next` knowing what it does.
   - Otherwise run `git checkout develop`.
 - **Sync:** `git fetch origin develop && git pull origin develop`. If the pull
   fails (uncommitted changes, diverged history), STOP and surface the error.
-- **Cleanliness check:** `git status --porcelain ACTION-ITEMS.md BACKLOG.md`.
+- **Cleanliness check:** `git status --porcelain .gainwix`.
   If either is already dirty, STOP and tell the operator — `/gx-next` would
   otherwise sweep their pre-existing edits into its commit.
 - **GitHub auth (best-effort):** run `gh auth status`. It's needed only for the
@@ -67,9 +67,9 @@ for confirmation — the operator invoked `/gx-next` knowing what it does.
   issue. If the item references **no** issue, `gh` isn't required — don't abort on
   a failed `gh auth`; just note that the `WIP` transition will be skipped.
 
-## Step 1 — Read ONE raw item from ACTION-ITEMS.md
+## Step 1 — Read ONE raw item from .gainwix/<component>/inbox.md
 
-- Read `ACTION-ITEMS.md`. Locate the marker line
+- Read `.gainwix/<component>/inbox.md`. Locate the marker line
   `<!-- Add action items below this line -->`.
 - The **raw item** is the **first line starting with `- ` (dash + space)** that
   appears AFTER the marker, scanning top-down. Capture its full body verbatim,
@@ -81,7 +81,7 @@ for confirmation — the operator invoked `/gx-next` knowing what it does.
   Preserve hanging-indent continuation lines (so a multi-line raw idea is taken
   whole).
 - If there is **no** `- ` item below the marker, print
-  `No action items to plan — ACTION-ITEMS.md is empty below the marker.` and
+  `No action items to plan — .gainwix/<component>/inbox.md is empty below the marker.` and
   STOP (touch nothing).
 - Print `Planning: <first line of the item, truncated to ~80 chars>`. Only this
   one item is processed this invocation.
@@ -89,7 +89,7 @@ for confirmation — the operator invoked `/gx-next` knowing what it does.
 ## Step 2 — Plan it (build the task)
 
 Turn the raw item into a detailed, **executable** task, written as a single
-`BACKLOG.md` item — a `- ` lead line plus an indented body so `/gx-go` captures the
+the backlog (`.gainwix/<component>/backlog.html`) item — a `- ` lead line plus an indented body so `/gx-go` captures the
 whole thing as one item. Shape:
 
 ```
@@ -100,7 +100,7 @@ whole thing as one item. Shape:
   - **Goal:** <the operator-visible end state>
   - **Steps:** <concrete, numbered — name the files / models / migrations /
     endpoints; 1–3 PRs' worth of work>
-  - **Done:** <done-criteria — e.g. the project's test suite green + linter clean (per `BACKLOG.md`'s autonomy preamble)>
+  - **Done:** <done-criteria — e.g. the project's test suite green + linter clean (per `.gainwix/autonomy.md`)>
   - **Tracks:** <if the raw item references a GitHub issue, carry it forward as
     **`Tracks #<N>`** + the `[#<N>](<url>)` link. This is the KANBAN issue
     (`queued`→`WIP`→`DONE`) — `/gx-go` opens a SUBORDINATE issue under #<N> and its PR
@@ -121,20 +121,20 @@ whole thing as one item. Shape:
   link**) — NOT a `Closes #<N>` for the fixing PR. This is the KANBAN issue: it
   flows `queued`→`WIP`→`DONE`, and `/gx-go` opens a SUBORDINATE issue under #<N> whose
   PR `Closes` the SUBORDINATE (never #<N>). The reference keeps the kanban tracked
-  end-to-end — `/gx-issue-pick` → `ACTION-ITEMS.md` → `/gx-next` (BACKLOG **Tracks:** +
+  end-to-end — `/gx-issue-pick` → `.gainwix/<component>/inbox.md` → `/gx-next` (BACKLOG **Tracks:** +
   `queued`→`WIP`) → `/gx-go` (subordinate of #<N>) → `/gx-qa`/`/gx-qbugs` (`WIP`→`DONE`).
   Never invent an issue reference when the item has none.
 
-## Step 3 — Append the task to BACKLOG.md
+## Step 3 — Append the task to the backlog
 
-- Read `BACKLOG.md`. Append the planned task(s) to the **END** of the
+- Read the backlog (`.gainwix/<component>/backlog.html`). Append the planned task(s) to the **END** of the
   `## Backlog Items` section (after any existing tasks; preserve the
   instructions region and the `### Autonomy preamble` above it untouched).
 - Newest tasks go last, so `/gx-go`'s top-down read processes the backlog FIFO.
 
-## Step 4 — Remove the consumed item from ACTION-ITEMS.md
+## Step 4 — Remove the consumed item from .gainwix/<component>/inbox.md
 
-- Delete the exact raw-item body captured in Step 1 from `ACTION-ITEMS.md` (plus
+- Delete the exact raw-item body captured in Step 1 from `.gainwix/<component>/inbox.md` (plus
   the single blank line immediately after it, if present), leaving the
   `<!-- Add action items below this line -->` marker and all remaining items
   intact. This advances the queue so the next `/gx-next` reads the next item.
@@ -160,15 +160,15 @@ references no issue (no `Tracks #<N>` → nothing to transition; `gh` isn't requ
 
 Per the project convention, the queue mutation lands directly on `develop`.
 
-- Stage **both** `ACTION-ITEMS.md` and `BACKLOG.md`. Commit (heredoc to preserve
+- Stage **both** `.gainwix/<component>/inbox.md` and the backlog (`.gainwix/<component>/backlog.html`). Commit (heredoc to preserve
   formatting):
 
   ```
   chore: plan ACTION-ITEMS entry into BACKLOG — <one-line title>
 
-  /gx-next consumed the top ACTION-ITEMS.md raw item, planned it into an
-  executable task, and appended that task to BACKLOG.md (## Backlog Items).
-  The consumed raw item was removed from ACTION-ITEMS.md.
+  /gx-next consumed the top .gainwix/<component>/inbox.md raw item, planned it into an
+  executable task, and appended that task to the backlog (## Backlog Items).
+  The consumed raw item was removed from .gainwix/<component>/inbox.md.
 
   Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
   ```
@@ -184,7 +184,7 @@ Print a short summary:
 - `Planned: <title>` and a one-line description of the BACKLOG task appended.
 - If the item tracked an issue, note the kanban move: `#<N> queued → WIP` (or that
   the transition was skipped/failed and why).
-- How many raw items remain in `ACTION-ITEMS.md` below the marker.
+- How many raw items remain in `.gainwix/<component>/inbox.md` below the marker.
 - The commit hash.
 - Pointer: `Run /gx-go to execute the top BACKLOG task, or /gx-next again to plan the
   next ACTION-ITEMS entry.`
@@ -193,7 +193,7 @@ Print a short summary:
 
 - **One raw item per invocation**, top-down from the first item below the marker.
 - **`/gx-next` PLANS only** (no code execution). It never runs tests, opens PRs, or
-  writes a `changes/*.md` record — execution + the change record are `/gx-go`'s job.
+  writes a `.gainwix/<component>/changes/*.md` record — execution + the change record are `/gx-go`'s job.
   Its only remote action is the best-effort kanban `queued`→`WIP` label transition
   (Step 4b), and only when the item tracks an issue — operational, like `/gx-qbugs`
   labeling, not code execution.

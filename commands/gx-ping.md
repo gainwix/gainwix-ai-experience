@@ -1,5 +1,5 @@
 ---
-description: Parallel Interactive Next and Go loop — read ALL of ACTION-ITEMS.md, work out which items are mutually conflict-free, pick up to 5 of them, and build those in parallel (one agent team per item, each in its own git worktree) within the same session. Plan + implement run in parallel; merges are serialized (rebase on develop, re-test, squash-merge). Falls back to serial when nothing is parallel-safe. Loops until ACTION-ITEMS.md (below the marker) and BACKLOG.md (## Backlog Items) are both empty.
+description: Parallel loop — take the ONE wave that can start now and run its items at the same time, then stop. Items in a wave never depend on each other; the next wave waits for this one to merge.
 disable-model-invocation: true
 ---
 
@@ -15,10 +15,10 @@ disable-model-invocation: true
 
 `/gx-ping` ("**P**arallel **I**nteractive **N**ext and **G**o") is the parallel
 sibling of `/gx-sing`. Instead of taking one item at a time, each iteration reads
-the **whole** `ACTION-ITEMS.md`, selects a batch of **mutually conflict-free**
+the **whole** `.gainwix/<component>/inbox.md`, selects a batch of **mutually conflict-free**
 items (up to 5), and builds them **in parallel** — one agent team per item, each
 in its own git worktree, all within this one session. It runs under the
-`### Autonomy preamble (read first)` in `BACKLOG.md` — no confirmation prompts.
+`### Autonomy preamble (read first)` in the backlog (`.gainwix/<component>/backlog.html`) — no confirmation prompts.
 
 **The golden rule:** *implementation is parallel; integration is serial.* Agents
 build and test concurrently in isolated worktrees, but the resulting PRs all
@@ -45,7 +45,7 @@ Parallelism here is bounded by real constraints — be honest about them every r
 ## One iteration
 
 1. **Read the whole queue.** Read every `- ` item below the
-   `<!-- Add action items below this line -->` marker in `ACTION-ITEMS.md`
+   `<!-- Add action items below this line -->` marker in `.gainwix/<component>/inbox.md`
    (top = highest priority).
 
 2. **Conflict analysis.** For each item, infer (from its description + a quick
@@ -64,8 +64,8 @@ Parallelism here is bounded by real constraints — be honest about them every r
    `log()` which items were chosen and which were deferred (and why).
 
 4. **Plan the batch (parallel `/gx-next`).** For each selected item run the `/gx-next`
-   planning: append its executable task to `## Backlog Items` in `BACKLOG.md` and
-   remove the consumed raw item from `ACTION-ITEMS.md`. Commit + push both files
+   planning: append its executable task to `## Backlog Items` in the backlog (`.gainwix/<component>/backlog.html`) and
+   remove the consumed raw item from `.gainwix/<component>/inbox.md`. Commit + push both files
    to `develop` **once** for the whole batch (a single `chore(next)` commit
    listing the batch).
 
@@ -74,9 +74,9 @@ Parallelism here is bounded by real constraints — be honest about them every r
    fresh worktree off the latest `origin/develop`); parallel `Agent` calls in a
    single message are an acceptable alternative. Each team runs its item's `/gx-go`
    **implementation** only: branch → implement → run the project's test + lint
-   commands green (per `BACKLOG.md`'s autonomy preamble; refresh any coverage
+   commands green (per the backlog (`.gainwix/<component>/backlog.html`)'s autonomy preamble; refresh any coverage
    report) → commit (dequeue
-   its `BACKLOG.md` task in the commit) → push its branch → open its PR. **Each
+   its the backlog (`.gainwix/<component>/backlog.html`) task in the commit) → push its branch → open its PR. **Each
    team STOPS before merging** — merging is the serial step below. One PR +
    one `changes/<ts>-change.md` per item, exactly as `/gx-go` produces.
 
@@ -85,13 +85,13 @@ Parallelism here is bounded by real constraints — be honest about them every r
    then `gh pr merge --squash --delete-branch`. After each merge, the next
    rebase picks up the new tip. If a rebase/merge **conflicts** (the static
    analysis missed an overlap) or its re-test fails: **do not force it** — leave
-   that item's task in `BACKLOG.md` (or return it to `ACTION-ITEMS.md`), close or
+   that item's task in the backlog (`.gainwix/<component>/backlog.html`) (or return it to `.gainwix/<component>/inbox.md`), close or
    park its PR, and record it in the roll-up. It gets retried (likely serially)
    on a later iteration. Finalize each merged item's `changes/<ts>-change.md`
-   (issue/PR links, timing) and its `CHANGELOG.md` link, and remove its worktree.
+   (issue/PR links, timing) and its `.gainwix/<component>/CHANGELOG.md` link, and remove its worktree.
 
 7. **Loop.** Re-evaluate from step 1 with a fresh batch — **no prompts** — until
-   BOTH `ACTION-ITEMS.md` (below the marker) and `BACKLOG.md` (`## Backlog
+   BOTH `.gainwix/<component>/inbox.md` (below the marker) and the backlog (`.gainwix/<component>/backlog.html`) (`## Backlog
    Items`) have no `- ` items left.
 
 ## Hard safety rules
@@ -109,10 +109,10 @@ Parallelism here is bounded by real constraints — be honest about them every r
 ## Failure handling
 
 - **An implementation team fails** (tests won't go green, build broken): that
-  item ships no PR; leave its task in `BACKLOG.md`, record the error verbatim in
+  item ships no PR; leave its task in the backlog (`.gainwix/<component>/backlog.html`), record the error verbatim in
   the roll-up, and continue integrating the teams that did succeed.
 - **A merge conflicts or re-test fails at integration:** park that item (back to
-  `BACKLOG.md`/`ACTION-ITEMS.md`), continue with the rest of the batch, and let a
+  the backlog (`.gainwix/<component>/backlog.html`)/`.gainwix/<component>/inbox.md`), continue with the rest of the batch, and let a
   later iteration retry it serially.
 - **A whole iteration makes no progress** (batch selected but every team failed
   or every merge was dropped): **STOP** rather than spin, and surface why.
@@ -137,7 +137,7 @@ Print one consolidated summary covering the whole run:
   Deferred / failed:
     • <title> — <reason verbatim>
 
-  Queues:   ACTION-ITEMS.md: <N remaining>   BACKLOG.md: <M remaining>
+  Queues:   .gainwix/<component>/inbox.md: <N remaining>   the backlog: <M remaining>
   Next:     <"Both queues empty — done." OR "Stopped: <reason>.">
 ```
 
@@ -158,6 +158,6 @@ Print one consolidated summary covering the whole run:
   against the same `develop` concurrently — they'd race the shared queue files
   and `develop` tip.
 - Every shipped item gets its own `changes/<ts>-change.md` via its team's `/gx-go`
-  implementation, linked from `CHANGELOG.md`. `/gx-ping` itself asks for no
-  confirmation; the standing autonomy preamble in `BACKLOG.md` authorizes the
+  implementation, linked from `.gainwix/<component>/CHANGELOG.md`. `/gx-ping` itself asks for no
+  confirmation; the standing autonomy preamble in the backlog (`.gainwix/<component>/backlog.html`) authorizes the
   full loop.

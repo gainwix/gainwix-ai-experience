@@ -1,5 +1,5 @@
 ---
-description: Create a GitHub issue from a prompt and tag it `queued`. Claude turns the free-text prompt into a well-formed issue (concise title + structured body), runs `gh issue create --label queued`, and reports the new issue. SCOPED to the `queued` label only (the same category /gx-issue-pick and /gx-issue-list use) — it tags every issue it files `queued` and touches nothing else: not other issues, not ACTION-ITEMS.md/BACKLOG.md, not any repo file. Operational (remote-only — one `gh issue create`); only BUILDING this recipe is a /gx-go change.
+description: Create a GitHub issue from a prompt and tag it `queued`. Touches GitHub only — nothing under .gainwix/ and nothing in the repo.
 disable-model-invocation: true
 ---
 
@@ -19,12 +19,12 @@ tags it with the **`queued`** label — the same category `/gx-issue-pick` and
 issue workflow:
 
 > `/gx-issue-add` (file) → `/gx-issue-list` (review the queue, oldest-first) →
-> `/gx-issue-pick` (line up in `ACTION-ITEMS.md`) → `/gx-next` (plan + `queued`→`WIP`) →
+> `/gx-issue-pick` (line up in `.gainwix/<component>/inbox.md`) → `/gx-next` (plan + `queued`→`WIP`) →
 > `/gx-go` (fix via a subordinate issue) → `/gx-qa`/`/gx-qbugs` (`WIP`→`DONE`).
 
 **Scoped to the `queued` label.** Every issue it creates gets the `queued` label
 (and only that label). It does **not** edit other issues, does **not** scan/list
-all of GitHub, and does **not** touch `ACTION-ITEMS.md` / `BACKLOG.md` or any repo
+all of GitHub, and does **not** touch the inbox and the backlog or any repo
 file — it just creates **one** GitHub Issue (remote-only). A run is **operational**
 (one `gh issue create`); only **building/altering this recipe** is a `/gx-go` change.
 
@@ -38,7 +38,7 @@ file — it just creates **one** GitHub Issue (remote-only). A run is **operatio
 ```bash
 gh auth status                           # required to create + label issues
 gh label create queued --color 1d76db \
-  --description "Queued into ACTION-ITEMS.md by /gx-issue-pick" 2>/dev/null || true
+  --description "Queued into .gainwix/<component>/inbox.md by /gx-issue-pick" 2>/dev/null || true
 ```
 
 If the prompt is **empty**, STOP and ask for the issue text. If `gh auth` fails,
@@ -74,7 +74,7 @@ Use `--body-file` (issue bodies often contain quotes/backticks). Apply **only** 
 
 Print: the new issue `#N` + URL, its title, and that it was tagged `queued`. Then
 the next step: **`/gx-issue-list`** to see the queue oldest-first, or **`/gx-issue-pick`**
-to line queued issues up in `ACTION-ITEMS.md` for `/gx-next` / `/gx-go`.
+to line queued issues up in `.gainwix/<component>/inbox.md` for `/gx-next` / `/gx-go`.
 
 ## Notes
 
@@ -84,7 +84,7 @@ to line queued issues up in `ACTION-ITEMS.md` for `/gx-next` / `/gx-go`.
   commit, no `/gx-go` workflow. Building/altering this recipe IS a `/gx-go` change.
 - **The `queued` family.** `/gx-issue-add` **enqueues** (creates the issue + labels it
   `queued`), `/gx-issue-list` **views** the queue oldest-first, and `/gx-issue-pick`
-  **dequeues** the oldest `queued` issues into `ACTION-ITEMS.md` (removing the
+  **dequeues** the oldest `queued` issues into `.gainwix/<component>/inbox.md` (removing the
   label). So an `/gx-issue-add`-filed issue flows straight onto the kanban:
   `/gx-issue-add` → `/gx-issue-list` → `/gx-issue-pick` → `/gx-next` (`queued`→`WIP`) → `/gx-go`
   (subordinate issue) → `/gx-qa`/`/gx-qbugs` (`WIP`→`DONE`).

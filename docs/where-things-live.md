@@ -15,6 +15,7 @@ is exactly why moving them was expensive.*
   deploy-context.json          ⛔ the production gate reads THIS EXACT PATH
   current                      which component the commands are acting on
   <component>/
+    inbox.md                   ⭐ raw ideas — the ONE file here you type in
     backlog.html               everything still to do, in dependency order
     in-progress.html           only what is being worked on now — transient
     completed.html             what landed, with the PR that landed it
@@ -25,6 +26,10 @@ is exactly why moving them was expensive.*
 ⛔ **Nothing goes in the repo root.** Not `BACKLOG.md`, not `ACTION-ITEMS.md`,
 not `changes/`. A repo's root belongs to the person who owns the repo.
 
+⚠ **`qa/` is the exception, and deliberately.** The QA suite is the developer's
+own file, hand-written by design — the opposite of the tool-managed files here.
+It stays at `qa/QA.md` where they put it.
+
 ⛔ **`deploy-context.json` is never moved or nested.** `hooks/gate-production.js`
 reads `<cwd>/.gainwix/deploy-context.json` on every command; anywhere else and
 every deploy is silently treated as production.
@@ -33,8 +38,9 @@ every deploy is silently treated as production.
 
 ## Never edit these files by hand
 
-The tool parses a file, recomputes what depends on what, and **writes the whole
-file back**. A hand edit is either overwritten on the next run or — worse — kept
+⭐ **Except `inbox.md`** — raw ideas, typed by a person, one per line. Everything
+else: the tool parses the file, recomputes what depends on what, and **writes the
+whole file back**. A hand edit is either overwritten on the next run or — worse — kept
 next to a dependency order that no longer matches it.
 
 ⭐ **The HTML is the source of truth.** There is no JSON beside it, deliberately:

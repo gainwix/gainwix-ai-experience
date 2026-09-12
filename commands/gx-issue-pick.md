@@ -1,5 +1,5 @@
 ---
-description: Dequeue the OLDEST `queued` GitHub issues into ACTION-ITEMS.md (FIFO). Lists OPEN issues labeled `queued` oldest-first (optional cap `/gx-issue-pick <N>`), appends one raw ACTION-ITEMS task per issue (carrying the issue id + link for the `queued`→`WIP`→`DONE` kanban), and REMOVES the `queued` label from each (dequeued from the waiting queue into active work). Reads the real-time list API + jq (no search-index lag). OPERATIONAL like /gx-qbugs//gx-qa//gx-sweep: removes the label + commits the ACTION-ITEMS queue edit to develop; NOT a /gx-go change. Idempotent (a dequeued issue loses `queued`, so it's never re-picked). Stops cleanly when the queue is empty.
+description: Dequeue the oldest `queued` GitHub issues into .gainwix/<component>/inbox.md (FIFO), removing the `queued` label.
 disable-model-invocation: true
 ---
 
@@ -11,15 +11,15 @@ disable-model-invocation: true
 > old root paths in the prose below are being rewritten command by command; where
 > one disagrees with that document, **that document wins.**
 
-# /gx-issue-pick — dequeue the oldest `queued` issues into ACTION-ITEMS.md (FIFO)
+# /gx-issue-pick — dequeue the oldest `queued` issues into .gainwix/<component>/inbox.md (FIFO)
 
 `/gx-issue-pick` is the bridge **from the `queued` issue queue into the repo's work
 pipeline**. It takes the **oldest** `queued`-labeled open issues (FIFO), lines them
-up in `ACTION-ITEMS.md`, and **dequeues** them — removing the `queued` label, since
+up in `.gainwix/<component>/inbox.md`, and **dequeues** them — removing the `queued` label, since
 they've moved from "waiting in the queue" into active work:
 
 > `/gx-issue-add` (enqueue) → `/gx-issue-list` (view the queue) → **`/gx-issue-pick`
-> (dequeue → `ACTION-ITEMS.md`)** → `/gx-next` (plan + `queued`→`WIP`) → `BACKLOG.md` →
+> (dequeue → `.gainwix/<component>/inbox.md`)** → `/gx-next` (plan + `queued`→`WIP`) → the backlog (`.gainwix/<component>/backlog.html`) →
 > `/gx-go` (fix via a **subordinate** issue; PR closes the subordinate, not the kanban
 > issue) → `/gx-qa`/`/gx-qbugs` (`WIP`→`DONE`).
 
@@ -29,7 +29,7 @@ they've moved from "waiting in the queue" into active work:
 or tagged by hand / a future command). `/gx-issue-pick` **dequeues** the oldest ones:
 
 - **Eligible to pick** = an OPEN issue **WITH** the `queued` label (and never a PR).
-- `/gx-issue-pick` lines it up in `ACTION-ITEMS.md` (oldest-first), then **removes its
+- `/gx-issue-pick` lines it up in `.gainwix/<component>/inbox.md` (oldest-first), then **removes its
   `queued` label** — it's now in the active pipeline, no longer waiting. A re-run
   skips it (no longer `queued`).
 - **The kanban continues from here:** the issue is the tracked kanban card that
@@ -42,17 +42,17 @@ or tagged by hand / a future command). `/gx-issue-pick` **dequeues** the oldest 
 - **To put an issue (back) in the queue**, add the `queued` label (or `/gx-issue-add`
   a new one). `/gx-issue-list` shows the current `queued` queue, oldest-first.
 
-`/gx-issue-pick` only REMOVES the `queued` label + writes `ACTION-ITEMS.md`; it never
+`/gx-issue-pick` only REMOVES the `queued` label + writes `.gainwix/<component>/inbox.md`; it never
 closes issues (the kanban issue is closed later by `/gx-qa`/`/gx-qbugs` when it reaches
 `DONE`; the `/gx-go` PR closes only the SUBORDINATE issue, not the kanban one) and
-never touches `BACKLOG.md` or app source.
+never touches the backlog (`.gainwix/<component>/backlog.html`) or app source.
 
 ## Operational, not a /gx-go change
 
 A `/gx-issue-pick` RUN is **OPERATIONAL, like `/gx-qbugs`/`/gx-qa`/`/gx-sweep`** — it removes
-the `queued` label (remote-side) and commits the **`ACTION-ITEMS.md` queue edit**
+the `queued` label (remote-side) and commits the **`.gainwix/<component>/inbox.md` queue edit**
 directly to `develop` (a queue mutation, like `/gx-next`). It does **NOT** run the
-`/gx-go` workflow, write a `changes/*.md`, or add a `CHANGELOG.md` entry. (Modifying
+`/gx-go` workflow, write a `.gainwix/<component>/changes/*.md`, or add a `.gainwix/<component>/CHANGELOG.md` entry. (Modifying
 the `/gx-issue-pick` machinery — this recipe — IS a normal `/gx-go` change; only
 *running* a pick is operational.)
 
@@ -65,13 +65,13 @@ the `/gx-issue-pick` machinery — this recipe — IS a normal `/gx-go` change; 
 
 ```bash
 git fetch origin develop                 # be on develop (or a develop-tracking worktree) + synced
-git status --porcelain ACTION-ITEMS.md   # expect EMPTY; if dirty, STOP — don't mix edits
+git status --porcelain .gainwix/<component>/inbox.md   # expect EMPTY; if dirty, STOP — don't mix edits
 gh auth status                           # required to list + unlabel issues
 gh label create queued --color 1d76db \
-  --description "Queued into ACTION-ITEMS.md by /gx-issue-pick" 2>/dev/null || true
+  --description "Queued into .gainwix/<component>/inbox.md by /gx-issue-pick" 2>/dev/null || true
 ```
 
-If `ACTION-ITEMS.md` is dirty, or `gh auth` fails, STOP and report.
+If `.gainwix/<component>/inbox.md` is dirty, or `gh auth` fails, STOP and report.
 
 ## Step 1 — Find the oldest `queued` issues (FIFO)
 
@@ -92,8 +92,8 @@ gh issue list --state open --label queued --limit 500 \
 - `gh issue list --label queued` is the scope — ONLY `queued` issues (never PRs), in real time.
 - The `jq` drops any `queued` issue **also** labeled `blocked` (queued but not ready to work); `sort_by(.createdAt)` orders oldest → newest (FIFO).
 - **Secondary dedup:** also skip any issue whose `#<n>` is ALREADY referenced in
-  `ACTION-ITEMS.md` (covers a prior partial run where Step 3's label removal didn't
-  land): `grep -qE "#<n>\b" ACTION-ITEMS.md`.
+  `.gainwix/<component>/inbox.md` (covers a prior partial run where Step 3's label removal didn't
+  land): `grep -qE "#<n>\b" .gainwix/<component>/inbox.md`.
 - If `/gx-issue-pick <N>` was given, keep only the **oldest N** that remain.
 
 If there are **zero** eligible issues, print **"No `queued` issues to pick — the
@@ -102,7 +102,7 @@ queue is empty."** and STOP (no label changes, no commit).
 ## Step 2 — Append one ACTION-ITEMS task per issue (oldest → newest)
 
 For each picked issue, in **oldest-first order**, append ONE raw `- ` line to
-`ACTION-ITEMS.md` **below the `<!-- Add action items below this line -->`
+`.gainwix/<component>/inbox.md` **below the `<!-- Add action items below this line -->`
 marker**, AFTER any existing items (existing queue keeps its priority; within the
 picked batch the oldest issue is first, so it gets worked first). Format:
 
@@ -114,7 +114,7 @@ picked batch the oldest issue is first, so it gets worked first). Format:
   `https://github.com/<owner>/<repo>/issues/<N>`) — use the real value, don't
   hardcode the repo.
 - The `[#<N>](<url>)` markdown link (issue **id + clickable URL**) is the **kanban
-  issue**, tracked through the pipeline: `/gx-next` carries it into the `BACKLOG.md`
+  issue**, tracked through the pipeline: `/gx-next` carries it into the the backlog (`.gainwix/<component>/backlog.html`)
   task (its **Tracks:** line) and moves it `queued`→`WIP`; `/gx-go` then opens a
   **SUBORDINATE** issue under #<N> and its PR `Closes` the SUBORDINATE (**not**
   #<N>, which stays open); `/gx-qa`/`/gx-qbugs` move #<N> to `DONE` (label + close) once
@@ -132,27 +132,27 @@ done
 ```
 
 "Try" to dequeue every picked issue; if a removal fails, note it and continue (the
-`ACTION-ITEMS.md` `#N` reference is the backup dedup, so a still-`queued` issue
-that's already in `ACTION-ITEMS.md` won't be re-picked next run).
+`.gainwix/<component>/inbox.md` `#N` reference is the backup dedup, so a still-`queued` issue
+that's already in `.gainwix/<component>/inbox.md` won't be re-picked next run).
 
 ## Step 4 — Commit the queue edit (operational)
 
 ```bash
-git add ACTION-ITEMS.md
+git add .gainwix/<component>/inbox.md
 git commit -m "issue-pick: dequeue <N> queued issue(s) into ACTION-ITEMS (oldest-first)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 git push origin develop
 ```
 
-Commit ONLY `ACTION-ITEMS.md`. Skip the commit entirely if nothing was dequeued.
+Commit ONLY `.gainwix/<component>/inbox.md`. Skip the commit entirely if nothing was dequeued.
 
 ## Step 5 — Report
 
 Print a roll-up:
 
-- **Dequeued (oldest → newest):** each `#N — <title>` (with its opened date) — lined up in `ACTION-ITEMS.md` and un-labeled `queued`.
-- **Skipped:** issues excluded + WHY (also `blocked`; or already referenced in `ACTION-ITEMS.md`).
+- **Dequeued (oldest → newest):** each `#N — <title>` (with its opened date) — lined up in `.gainwix/<component>/inbox.md` and un-labeled `queued`.
+- **Skipped:** issues excluded + WHY (also `blocked`; or already referenced in `.gainwix/<component>/inbox.md`).
 - **Counts + next step:** "`<N>` dequeued; `<M>` still in the `queued` queue (`/gx-issue-list`). Run **`/gx-next`** (plan one + move it `queued`→`WIP`), **`/gx-sing`** (serial), or **`/gx-ping`** (parallel) to work them; each fix is a `/gx-go` PR that closes a **subordinate** issue (not the kanban `#N`, which `/gx-qa`/`/gx-qbugs` close to `DONE` once its subordinates are done + the suite is green)."
 
 ## Notes
@@ -165,14 +165,14 @@ Print a roll-up:
   (never this issue) — `/gx-qa`/`/gx-qbugs` move this issue to `DONE` + close it once its
   subordinates are closed + the suite is green. Re-add the `queued` label to put an
   issue back in the queue.
-- **Operational, not `/gx-go`** — removes the label + commits the `ACTION-ITEMS.md`
-  queue edit to `develop`; no `changes/*.md` / `CHANGELOG.md`. Building/altering
+- **Operational, not `/gx-go`** — removes the label + commits the `.gainwix/<component>/inbox.md`
+  queue edit to `develop`; no `.gainwix/<component>/changes/*.md` / `.gainwix/<component>/CHANGELOG.md`. Building/altering
   this recipe IS a `/gx-go` change.
 - **One driver at a time** — like `/gx-next`/`/gx-qbugs`, don't run it concurrently with
-  another command mutating `ACTION-ITEMS.md` / the `develop` tip.
+  another command mutating `.gainwix/<component>/inbox.md` / the `develop` tip.
 - **The `queued` family.** `/gx-issue-add` enqueues (creates + labels `queued`),
   `/gx-issue-list` views the queue oldest-first, and `/gx-issue-pick` dequeues the oldest
-  into `ACTION-ITEMS.md`. Pairs with `/gx-qbugs`, which FILES bug Issues from `/gx-qa`
+  into `.gainwix/<component>/inbox.md`. Pairs with `/gx-qbugs`, which FILES bug Issues from `/gx-qa`
   failures — label those `queued` (e.g. via `/gx-issue-pick`'s sibling tagging or by
   hand) to feed them into the same queue.
 ```

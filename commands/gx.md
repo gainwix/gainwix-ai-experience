@@ -20,11 +20,11 @@ Get started:
 - `/gx` — this orientation.
 - `/gx-help <command>` — deep dive on one command.
 - `/gx-init` — set up your repo: detect the stack and scaffold the dev-workflow files.
-- `/gx-about` — fill in ABOUT.md by interview, then seed ACTION-ITEMS.md from it. Run after `/gx-init`, before building.
+- `/gx-about` — fill in ABOUT.md by interview, then seed .gainwix/<component>/inbox.md from it. Run after `/gx-init`, before building.
 
 Build & ship (changes → PR + change record):
-- `/gx-next` — plan the top `ACTION-ITEMS.md` idea into a `BACKLOG.md` task.
-- `/gx-go` — run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record.
+- `/gx-next` — plan the top `.gainwix/<component>/inbox.md` idea into a backlog task.
+- `/gx-go` — run one task end-to-end (branch → test → PR → squash-merge) + a `.gainwix/<component>/changes/*.md` record.
 - `/gx-sing` — serial loop: plan one + ship one, repeat until both queues drain.
 - `/gx-ping` — parallel loop: build a conflict-free batch (worktree per item), merge serially.
 
@@ -36,7 +36,7 @@ QA:
 Issues (GitHub `queued` kanban):
 - `/gx-issue-add <text>` — file an issue, tagged `queued`.
 - `/gx-issue-list` — view the `queued` queue, oldest-first.
-- `/gx-issue-pick` — dequeue the oldest `queued` issues into `ACTION-ITEMS.md`.
+- `/gx-issue-pick` — dequeue the oldest `queued` issues into `.gainwix/<component>/inbox.md`.
 
 Deploy (one of the features):
 - `/gx-sim` — dry run: show the deploy plan (infra + cost + diff) and stop. Never applies.

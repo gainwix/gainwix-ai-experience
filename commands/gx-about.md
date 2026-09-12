@@ -1,6 +1,6 @@
 ---
 name: gx-about
-description: Product discovery — interview whoever owns the product (a founder, business owner, or developer) to fill in ABOUT.md (the product source-of-truth), verify it, then seed ACTION-ITEMS.md with a prioritized feature list generated from it. Run after /gx-init, before the dev-workflow commands. Planning and docs only — building and deploying come later.
+description: Product discovery — interview whoever owns the product, then write what you learn into ABOUT.md and seed .gainwix/<component>/inbox.md with the first ideas. Run after /gx-init, before building.
 disable-model-invocation: true
 ---
 
@@ -12,7 +12,7 @@ disable-model-invocation: true
 > old root paths in the prose below are being rewritten command by command; where
 > one disagrees with that document, **that document wins.**
 
-# /gx-about — fill in ABOUT.md, then seed ACTION-ITEMS.md from it
+# /gx-about — fill in ABOUT.md, then seed .gainwix/<component>/inbox.md from it
 
 `/gx-about` is the bridge between `/gx-init` (which scaffolds the **empty**
 templates) and the dev-workflow commands (`/gx-next` → `/gx-go`). It does two
@@ -20,12 +20,12 @@ things, each followed by a human verification gate:
 
 1. **Interview you** to fill in `ABOUT.md` — the single source of truth for what
    your product is and why it exists.
-2. **Seed `ACTION-ITEMS.md`** — turn that approved `ABOUT.md` into a prioritized,
+2. **Seed `.gainwix/<component>/inbox.md`** — turn that approved `ABOUT.md` into a prioritized,
    dependency-ordered list of raw feature ideas the rest of the workflow chomps
    through.
 
 Run it **in this conversation** — do NOT dispatch it as a background subagent (a
-subagent can't interview you). It writes **only** `ABOUT.md` and `ACTION-ITEMS.md`:
+subagent can't interview you). It writes **only** `ABOUT.md` and `.gainwix/<component>/inbox.md`:
 pure discovery and planning that gets you ready to build and ship. Building is
 `/gx-next`/`/gx-go`; deploying is `/gx-gcp-deploy`.
 
@@ -46,7 +46,7 @@ default I can override beats a question I can't answer.
 
 ## Step 0 — Pre-flight
 
-- **Require the scaffold.** Read `ABOUT.md` and `ACTION-ITEMS.md` at the repo
+- **Require the scaffold.** Read `ABOUT.md` and `.gainwix/<component>/inbox.md` at the repo
   root. If either is missing, STOP and tell me to run `/gx-init` first — it
   scaffolds them; `/gx-about` fills them in, it doesn't create them.
 - **Detect prior state (never clobber silently):**
@@ -56,7 +56,7 @@ default I can override beats a question I can't answer.
   - If `ABOUT.md` is **already filled in** (no placeholders left), ask via
     `AskUserQuestion` whether to **Refine** it (re-interview, using the current
     content as the starting point) or **Skip to seeding** (jump to Step 4).
-  - If `ACTION-ITEMS.md` **already has `- ` items** below the
+  - If `.gainwix/<component>/inbox.md` **already has `- ` items** below the
     `<!-- Add action items below this line -->` marker, ask whether to **Append**
     the generated features after them or **Replace** them — default **Append**;
     never silently discard items I already wrote.
@@ -116,7 +116,7 @@ confirm/adjust rather than asking from scratch.
   (**Approve** / **Revise**). If I pick Revise, capture exactly what to change,
   rewrite `ABOUT.md`, and ask again. **Do not proceed to seeding until I approve.**
 
-## Step 4 — Seed ACTION-ITEMS.md from the approved ABOUT.md
+## Step 4 — Seed .gainwix/<component>/inbox.md from the approved ABOUT.md
 
 Run `ABOUT.md`'s own **"Prompt — Generate Features From This Document"** section
 against the approved document to derive a **comprehensive, prioritized feature
@@ -125,14 +125,14 @@ covering every lifecycle stage, every component, and the cross-cutting concerns
 (auth, roles/permissions, the core entities + relationships, notifications,
 delivery, progress/state tracking, analytics, administration).
 
-Then **distill** that into `ACTION-ITEMS.md` as **raw `- ` items below the
+Then **distill** that into `.gainwix/<component>/inbox.md` as **raw `- ` items below the
 `<!-- Add action items below this line -->` marker** (Append or Replace per
 Step 0). This is the important part:
 
-- `ACTION-ITEMS.md` is the **raw inbox**, not the planned queue. Write each item
+- `.gainwix/<component>/inbox.md` is the **raw inbox**, not the planned queue. Write each item
   as a **concise one-line idea** (a title + a short phrase) — **not** the full
   user-story / acceptance-criteria detail. `/gx-next` expands each into a detailed
-  `BACKLOG.md` task later; the rich feature spec is the *source material* you
+  the backlog (`.gainwix/<component>/backlog.html`) task later; the rich feature spec is the *source material* you
   reason from, not what you paste in here.
 - **One self-contained, one-PR-sized idea per `- ` line.**
 - **Order by dependency, foundational first** — auth, core entities/roles, the
@@ -142,7 +142,7 @@ Step 0). This is the important part:
 
 ## Step 5 — 🚦 GATE 2 (verify) + report
 
-- **Show me the seeded `ACTION-ITEMS.md`** and get approval via `AskUserQuestion`
+- **Show me the seeded `.gainwix/<component>/inbox.md`** and get approval via `AskUserQuestion`
   (**Approve** / **Revise** — e.g. reorder, add, drop, split an item). Loop until
   I approve.
 - Report what you wrote: which `ABOUT.md` sections you filled and how many action
@@ -153,7 +153,7 @@ Step 0). This is the important part:
 
 Close with the next steps, plain-spoken:
 
-- **Plan + ship one item:** `/gx-next` (plan the top idea into `BACKLOG.md`) →
+- **Plan + ship one item:** `/gx-next` (plan the top idea into the backlog (`.gainwix/<component>/backlog.html`)) →
   `/gx-go` (execute it end-to-end).
 - **Automate the whole queue:** `/gx-sing` (serial) or `/gx-ping` (parallel).
 - **Prefer GitHub-tracked intake?** Capture ideas as issues with `/gx-issue-add`
@@ -162,15 +162,15 @@ Close with the next steps, plain-spoken:
 
 ## Notes
 
-- **Scope: discovery only.** `/gx-about` writes `ABOUT.md` + `ACTION-ITEMS.md` and
+- **Scope: discovery only.** `/gx-about` writes `ABOUT.md` + `.gainwix/<component>/inbox.md` and
   nothing else. These are doc/queue edits, not a code change, so there's no PR and
-  no `changes/*.md` record (see `/gx-go`'s queue-edit exception); building and
+  no `.gainwix/<component>/changes/*.md` record (see `/gx-go`'s queue-edit exception); building and
   deploying come later.
 - **`ABOUT.md` is yours to own.** It's the product source-of-truth on purpose; this
   command just makes filling it fast and turns it into a backlog. Re-run
   `/gx-about` anytime to refine the doc and re-seed.
 - **Re-run-safe.** Re-running offers Refine/Skip for `ABOUT.md` and Append/Replace
-  for `ACTION-ITEMS.md`, so a second run never silently overwrites your work.
+  for `.gainwix/<component>/inbox.md`, so a second run never silently overwrites your work.
 
 Keep it plain-spoken and jargon-free. I'm whoever owns this product — a founder, a
 business owner, or a developer — describing it in plain language, not writing a

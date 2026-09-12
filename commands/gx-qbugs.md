@@ -1,5 +1,5 @@
 ---
-description: Triage the LATEST /gx-qa run's FAILURES into bug Issues + ACTION-ITEMS fix tasks. Read the newest qa/RUN-REPORT-<ts>.json, take only the failed workflows, GROUP them into discrete bugs (same root cause = one bug), and open ONE GitHub Issue labeled `bug` per discrete bug — each with its located WHERE (frontend vs backend), report excerpts, and ONLY that bug's screenshots (copied into a committed qa/bug-evidence/ path and embedded inline, since the full screenshot folders are gitignored). Cross-link related-but-distinct bugs. Append one ACTION-ITEMS.md fix task per bug (Closes #N). OPERATIONAL like /gx-qa//gx-sweep: creates issues + commits the bug-evidence + the ACTION-ITEMS queue edit to develop; NOT a /gx-go change. Idempotent via a [QA:<slug>] marker. Stops cleanly when there are no runs or no failures.
+description: Triage the latest /gx-qa run's failures into bug issues and fix ideas in .gainwix/<component>/inbox.md (idempotent via a [QA:<slug>] marker).
 disable-model-invocation: true
 ---
 
@@ -19,7 +19,7 @@ RUN-REPORT, `/gx-qbugs` looks at the **FAILURE scenarios ONLY** in that latest r
 **groups them into discrete bugs** (failures with the same root cause are ONE
 bug), and for each discrete bug (a) opens **one** GitHub **Issue labeled `bug`**
 with all of that bug's context, report excerpts, and screenshots, and (b) appends
-an `ACTION-ITEMS.md` fix task so a later `/gx-next`/`/gx-sing`/`/gx-ping` picks it up.
+an fix idea in `.gainwix/<component>/inbox.md` so a later `/gx-next`/`/gx-sing`/`/gx-ping` picks it up.
 Passing workflows are ignored.
 
 It reads the runner's machine-readable **`qa/RUN-REPORT-<ts>.json` sidecar** (not
@@ -42,9 +42,9 @@ screenshots are committed — never the whole run.
 
 A `/gx-qbugs` run is **OPERATIONAL, like `/gx-qa` and `/gx-sweep`** — it creates the GitHub
 Issues (remote-side) and commits the **bug-evidence screenshots** + the
-**`ACTION-ITEMS.md` queue edit** directly to `develop` (a queue mutation, like
-`/gx-next`). It does **NOT** run the `/gx-go` workflow, write a `changes/*.md`, or add a
-`CHANGELOG.md` entry. (Modifying the `/gx-qbugs` machinery — this recipe — IS a
+**`.gainwix/<component>/inbox.md` queue edit** directly to `develop` (a queue mutation, like
+`/gx-next`). It does **NOT** run the `/gx-go` workflow, write a `.gainwix/<component>/changes/*.md`, or add a
+`.gainwix/<component>/CHANGELOG.md` entry. (Modifying the `/gx-qbugs` machinery — this recipe — IS a
 normal `/gx-go` code change; only *running* a triage is operational.) The *fixing* of
 each filed bug happens later via the normal `/gx-go` workflow.
 
@@ -67,8 +67,8 @@ each filed bug happens later via the normal `/gx-go` workflow.
   (local-only) under `qa/RUN-REPORT-<ts>/`.
 - **Targets it writes:** GitHub Issues (label `bug`); committed
   `qa/bug-evidence/<ts>/<bug>/` screenshots; appended raw lines in
-  `ACTION-ITEMS.md`. It never edits `qa/RUN-REPORT-*` (the run output),
-  `BACKLOG.md`, or any app source.
+  `.gainwix/<component>/inbox.md`. It never edits `qa/RUN-REPORT-*` (the run output),
+  the backlog (`.gainwix/<component>/backlog.html`), or any app source.
 - **Idempotence marker:** every Issue body + ACTION-ITEMS line carries a stable
   `[QA:<slug>]` marker for **each** workflow the bug covers, so a re-run never
   double-files a failure already in an open bug Issue.
@@ -77,12 +77,12 @@ each filed bug happens later via the normal `/gx-go` workflow.
 
 ```bash
 git fetch origin develop                 # be on develop (or a develop-tracking branch) + synced
-git status --porcelain ACTION-ITEMS.md   # expect EMPTY; if not, STOP — do not mix edits
+git status --porcelain .gainwix/<component>/inbox.md   # expect EMPTY; if not, STOP — do not mix edits
 gh label create bug --color d73a4a --description "QA-found defect" 2>/dev/null || true
 gh auth status                           # required for issue create + dedup search
 ```
 
-If `ACTION-ITEMS.md` is dirty, or `gh auth` fails, STOP and report (do not append
+If `.gainwix/<component>/inbox.md` is dirty, or `gh auth` fails, STOP and report (do not append
 onto a dirty queue / cannot file issues).
 
 ## Step 1 — Find the latest run
@@ -134,13 +134,13 @@ real bugs into one Issue).
 
 For each discrete bug, SKIP it if it is already filed. A bug is "already filed" if
 an OPEN `bug` Issue already carries **any** of its covered workflows' `[QA:<slug>]`
-markers, or `ACTION-ITEMS.md` already has a line with one:
+markers, or `.gainwix/<component>/inbox.md` already has a line with one:
 
 ```bash
 for slug in <covered slugs of this bug>; do
   gh issue list --state open --label bug --search "[QA:$slug]" --json number,title \
     --jq '.[] | "\(.number) \(.title)"'
-  grep -F "[QA:$slug]" ACTION-ITEMS.md
+  grep -F "[QA:$slug]" .gainwix/<component>/inbox.md
 done
 ```
 
@@ -253,7 +253,7 @@ own discrete bug intact — cross-links are references, not merges.
 
 ## Step 8 — Append one ACTION-ITEMS fix task per bug
 
-For each NEW Issue, append ONE raw `- ` line to `ACTION-ITEMS.md` **below the
+For each NEW Issue, append ONE raw `- ` line to `.gainwix/<component>/inbox.md` **below the
 `<!-- Add action items below this line -->` marker** — a concrete BUG-FIX task
 naming it a bug, referencing the Issue (`Closes #N`), the WHERE (frontend vs
 backend + route/component/endpoint), the covered workflow(s), and each
@@ -269,19 +269,19 @@ preserve the marker + existing content. Do **not** plan or execute the fix here.
 ## Step 9 — Commit the queue edit (operational)
 
 ```bash
-git add ACTION-ITEMS.md
+git add .gainwix/<component>/inbox.md
 git commit -m "qbugs: file <N> bug(s) from run <TS> as issues + fix tasks
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 git push origin develop
 ```
 
-Commit ONLY `ACTION-ITEMS.md` here (the bug-evidence was already committed in Step
+Commit ONLY `.gainwix/<component>/inbox.md` here (the bug-evidence was already committed in Step
 6). Skip if no new bugs were filed (everything deduped).
 
 ## Step 9b — Advance the issue kanban (`WIP` → `DONE`)
 
-**Operational, like the bug-evidence / queue-edit commits** — no `changes/*.md`, no
+**Operational, like the bug-evidence / queue-edit commits** — no `.gainwix/<component>/changes/*.md`, no
 `/gx-go`. This is the SAME `WIP`→`DONE` sweep `/gx-qa` does, included here for
 consistency: a tracked kanban issue at `WIP` becomes `DONE` once **all its
 subordinate issues are CLOSED AND the latest `/gx-qa` run is GREEN**.
@@ -322,7 +322,7 @@ fi
 - Advance `#<N>` only when it has **≥1** subordinate AND **every** subordinate is
   `CLOSED` AND the latest run is green. Best-effort; report which issues advanced
   (usually none, since `/gx-qbugs` runs on a red run). Clearly OPERATIONAL — no
-  `changes/*.md`, no `CHANGELOG.md`, no `/gx-go`.
+  `.gainwix/<component>/changes/*.md`, no `.gainwix/<component>/CHANGELOG.md`, no `/gx-go`.
 
 ## Step 10 — Summary + next steps
 
@@ -339,8 +339,8 @@ Print a roll-up:
 
 Then instruct: run **`/gx-next`** (plan one fix), **`/gx-sing`** (plan + fix serially),
 or **`/gx-ping`** (parallel) to pick up the fix task(s) — the actual fixing is the
-normal **`/gx-go`** workflow (each fix = its own branch + PR + `changes/*.md` +
-`CHANGELOG.md`, with the Issue auto-closed by `Closes #N`).
+normal **`/gx-go`** workflow (each fix = its own branch + PR + `.gainwix/<component>/changes/*.md` +
+`.gainwix/<component>/CHANGELOG.md`, with the Issue auto-closed by `Closes #N`).
 
 ## Notes
 
@@ -351,7 +351,7 @@ normal **`/gx-go`** workflow (each fix = its own branch + PR + `changes/*.md` +
   shots, copied to `qa/bug-evidence/<ts>/<bug>/` and embedded via a SHA-pinned raw
   URL (the full run folder stays gitignored).
 - **Operational, not `/gx-go`** — creates Issues + commits the bug-evidence + the
-  `ACTION-ITEMS.md` queue edit to `develop`; no `changes/*.md` / `CHANGELOG.md`.
+  `.gainwix/<component>/inbox.md` queue edit to `develop`; no `.gainwix/<component>/changes/*.md` / `.gainwix/<component>/CHANGELOG.md`.
 - **Issue kanban sweep (Step 9b).** Like `/gx-qa`, `/gx-qbugs` advances each OPEN `WIP`
   issue whose subordinates are ALL closed to `DONE` — but ONLY when the latest
   `/gx-qa` run is green. Since `/gx-qbugs` triages a RED run, this normally DEFERS to the

@@ -84,6 +84,7 @@ test("creating a component puts everything under .gainwix and nothing in the roo
   for (const f of [
     ".gainwix/README.md",
     ".gainwix/autonomy.md",
+    ".gainwix/admin/inbox.md",
     ".gainwix/admin/backlog.html",
     ".gainwix/admin/in-progress.html",
     ".gainwix/admin/completed.html",
