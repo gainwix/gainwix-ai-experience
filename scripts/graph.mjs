@@ -82,6 +82,13 @@ export function computeWaves(items) {
 /**
  * The longest weighted chain — the shortest the work can possibly take, however
  * many people are on it.
+ *
+ * ⚠ **A dependency not in `items` counts as already satisfied, at no cost.**
+ * That is not leniency, it is what the number means: each stage page answers
+ * *"how much is left in here"*, and a dependency that has moved to in-progress
+ * or completed is work that is no longer left. ⭐ Unlike `computeWaves`, which
+ * runs over the whole component and **does** refuse an unknown dependency —
+ * because a wave number has to mean the same thing on every page.
  */
 export function criticalPath(items) {
   const byId = new Map(items.map((i) => [i.id, i]));
@@ -90,6 +97,7 @@ export function criticalPath(items) {
   const longest = (id) => {
     if (memo.has(id)) return memo.get(id);
     const item = byId.get(id);
+    if (!item) return { days: 0, path: [] };
     let best = { days: 0, path: [] };
     for (const d of item.deps) {
       const r = longest(d);
@@ -162,10 +170,17 @@ export function ordered(items) {
  * wave — the parallelism happens inside it, across agents, and never spills
  * into the next.
  */
-export function readyWave(items, completedIds = []) {
-  const done = new Set(completedIds);
-  const open = items.filter((i) => !done.has(i.id));
-  const startable = open.filter((i) => i.deps.every((d) => done.has(d)));
+export function readyWave(items, completedIds = [], inFlightIds = []) {
+  const merged = new Set(completedIds);
+  const picked = new Set(inFlightIds);
+
+  // ⛔⛔ **Only MERGED work unblocks anything.** The sample's own rule: "an item
+  // may start once every serial it depends on has merged." Treating in-progress
+  // as satisfied would hand somebody a task whose foundation is still being
+  // written — half-built, unreviewed, and liable to change under them. Caught
+  // by running the lifecycle, not by a test.
+  const open = items.filter((i) => !merged.has(i.id) && !picked.has(i.id));
+  const startable = open.filter((i) => i.deps.every((d) => merged.has(d)));
   if (!startable.length) return { wave: null, items: [] };
   const wave = Math.min(...startable.map((i) => i.wave));
   return { wave, items: ordered(startable.filter((i) => i.wave === wave)) };

@@ -172,6 +172,32 @@ test("⛔ readyWave returns ONE wave, never the whole backlog", () => {
   );
 });
 
+test("⛔⛔ being picked up does not unblock what depends on it — only merging does", () => {
+  // The sample's rule, stated exactly: "an item may start once every serial it
+  // depends on HAS MERGED." Found by driving the lifecycle by hand: with A only
+  // in-progress, B was offered — a task whose foundation was still being
+  // written.
+  const items = computeWaves([it("A"), it("B", ["A"])]);
+
+  const whileInFlight = readyWave(items, [], ["A"]);
+  assert.deepEqual(
+    whileInFlight.items.map((i) => i.id),
+    [],
+    "B must NOT be startable while A is only in progress",
+  );
+
+  const afterMerge = readyWave(items, ["A"], []);
+  assert.deepEqual(afterMerge.items.map((i) => i.id), ["B"]);
+});
+
+test("an item already picked up is not offered again", () => {
+  const items = computeWaves([it("A"), it("B")]);
+  assert.deepEqual(
+    readyWave(items, [], ["A"]).items.map((i) => i.id),
+    ["B"],
+  );
+});
+
 test("readyWave moves on only when the wave it was waiting on has completed", () => {
   const items = computeWaves([it("A"), it("B"), it("C", ["A", "B"])]);
 
