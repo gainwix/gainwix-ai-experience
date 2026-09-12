@@ -110,6 +110,55 @@ export function detect(root = ".") {
   };
 }
 
+/** Every component this repo has set up, by folder. */
+export function components(root = ".") {
+  const base = path.join(root, ".gainwix");
+  if (!exists(base)) return [];
+  return fs
+    .readdirSync(base, { withFileTypes: true })
+    .filter(
+      (e) =>
+        e.isDirectory() && exists(path.join(base, e.name, "backlog.html")),
+    )
+    .map((e) => e.name)
+    .sort();
+}
+
+/** Where the chosen component is remembered between commands. */
+const CURRENT = (root) => path.join(root, ".gainwix", "current");
+
+/**
+ * Which component a command should act on.
+ *
+ * ⭐ **One component means never being asked.** Most repos build one thing, and
+ * a question with one possible answer is a tax on every command. More than one
+ * and the choice is remembered, so it is asked once rather than every time.
+ *
+ * Returns `{ component }`, or `{ choices }` when a person has to decide.
+ */
+export function currentComponent(root = ".") {
+  const all = components(root);
+  if (all.length === 0) return { choices: [], none: true };
+  if (all.length === 1) return { component: all[0] };
+  if (exists(CURRENT(root))) {
+    const saved = fs.readFileSync(CURRENT(root), "utf8").trim();
+    if (all.includes(saved)) return { component: saved };
+  }
+  return { choices: all };
+}
+
+/** Remember the choice. ⚠ Refuses a component that does not exist. */
+export function setCurrent(root, component) {
+  const all = components(root);
+  if (!all.includes(component)) {
+    throw new Error(
+      `${component} is not set up in this repo. Components here: ${all.join(", ") || "(none)"}`,
+    );
+  }
+  fs.writeFileSync(CURRENT(root), `${component}\n`);
+  return component;
+}
+
 /** The notice that makes "do not edit this by hand" a fact and not a hope. */
 export const README = `# .gainwix
 
