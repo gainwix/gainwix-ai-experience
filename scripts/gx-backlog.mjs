@@ -178,7 +178,20 @@ switch (cmd) {
         {
           wave,
           count: items.length,
-          items: items.map((i) => ({ id: i.id, title: i.title, pri: i.pri, size: i.size })),
+          // ⛔ detail and spec travel with the item. A driver that names the
+          // item to /gx-go and passes only a title has handed over a headline
+          // and kept the brief — the run then builds whatever the title
+          // suggests. Nothing errors; it just builds the wrong thing.
+          items: items.map((i) => ({
+            id: i.id,
+            title: i.title,
+            detail: i.detail,
+            spec: i.spec,
+            deps: i.deps,
+            pri: i.pri,
+            size: i.size,
+            lane: i.lane,
+          })),
           next: after.wave === null ? null : { wave: after.wave, count: after.items.length },
         },
         null,

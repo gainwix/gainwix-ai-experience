@@ -103,12 +103,26 @@ COMPONENT=<the resolved component>
   --to backlog`. An item stranded in `in-progress.html` blocks everything behind
   it and nothing will say so.
 
-⚠ **Backlog mode is for a person running `/gx-go` on its own.** `/gx-sing` and
-`/gx-ping` do **not** use it — they capture their wave up front and hand this
-workflow a **named** item, doing **every** `$GX move` themselves — `in-progress`,
-`completed`, and the put-back below. ⛔ **When a driver named the item, do not make
-any of those moves here**: the driver will make it too, and the second one exits
-non-zero with *"already in <stage>"*, which a driver can read as a hard failure. A driver that let `/gx-go` choose would re-pick an item that had just
+- **Driven mode** — a driver (`/gx-sing`, `/gx-ping`) handed you **one item's
+  serial, title, detail, spec and lane**, taken from its captured `$GX ready`.
+  **That item is the task; do not read the backlog and do not choose.**
+
+  ⛔ **Make no `$GX move` at all in this mode** — not `in-progress`, not
+  `completed`, not the put-back. The driver owns every move; a second one exits
+  non-zero with *"already in \<stage\>"*, which a driver can read as a hard
+  failure and abort a run it had already handled.
+
+  ⛔ **Never fall back to backlog mode here.** Under `/gx-ping` the whole wave is
+  already in `in-progress`, so `$GX ready` returns **the next wave** — you would
+  build something whose foundations have not merged.
+
+  Everything else — the change record, the issue, the build/PR loop — is
+  identical. **Return to the driver:** the branch name, the issue URL, the PR
+  URL, the merge SHA if you merged, and the path of your change record. It
+  cannot get them any other way once you are done.
+
+⚠ **Backlog mode is for a person running `/gx-go` on its own.** The drivers use
+driven mode above. A driver that let `/gx-go` choose would re-pick an item that had just
 failed and gone back to the backlog, because `$GX ready` offers it again straight
 away.
 

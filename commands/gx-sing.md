@@ -38,7 +38,7 @@ was wrong, and the paragraph above is why.
 **Pipeline reminder:** `.gainwix/<component>/inbox.md` (raw ideas, below the
 `<!-- Add action items below this line -->` marker) → **`/gx-next`** (plan a raw
 item into `.gainwix/<component>/backlog.html`) → **`/gx-go`** (build one item →
-PR → `changes/<ts>-change.md` → linked in `.gainwix/<component>/CHANGELOG.md`).
+PR → `.gainwix/<component>/changes/<ts>-change.md` → linked in `.gainwix/<component>/CHANGELOG.md`).
 
 ## The execution
 
@@ -64,16 +64,20 @@ $GX show --stage in-progress
 ⚠ **Anything already sitting in `in-progress` is a stranded item from a crashed
 run** — a second driver against the same trunk is forbidden, so there is no other
 explanation. It blocks everything behind it and **nothing else will say so.**
-Surface it and ask, or return it with `$GX move --id <SERIAL> --to backlog`. Do
-not start a run on top of it silently.
+⛔ **STOP and say so.** Do not plan, do not read the wave, do not start on top of
+it: a stranded item is excluded from what `ready` treats as open **while still
+blocking its dependents**, so the wave you would take is computed as if it did not
+exist. The operator finishes it or returns it with
+`$GX move --id <SERIAL> --to backlog`, then runs `/gx-sing` again.
 
 ### 1 · Plan — top up the backlog from the inbox
 
 For each raw `- ` item below the `<!-- Add action items below this line -->`
 marker in `.gainwix/<component>/inbox.md`, top-down and **up to 5 this run**, run
-the `/gx-next` planning (`${CLAUDE_PLUGIN_ROOT}/commands/gx-next.md`): append its
-executable task to the backlog and remove the consumed raw item. Commit + push
-**once** for the group (a single `chore(next)` commit listing them).
+the `/gx-next` planning (`${CLAUDE_PLUGIN_ROOT}/commands/gx-next.md`) — **the
+whole of it, unmodified, including its own commit and push.** ⚠ **Do not batch
+those into one commit:** `/gx-next` commits per invocation, and overriding that
+here leaves it unsaid which of its other steps still apply.
 
 ⭐ **Planning ships no code**, which is why it is not bounded by the wave — but a
 newly planned item with no dependencies lands in **wave 0** and is built in this
@@ -110,13 +114,20 @@ $GX move --id <SERIAL> --to in-progress [--issue <issue-url>]
 already tracks an issue; `/gx-go` does not open one until after its tests are
 green, so at pick-up there is normally no URL.
 
-Then run the `/gx-go` workflow (`${CLAUDE_PLUGIN_ROOT}/commands/gx-go.md`) on
-**that named item** — worktree → build → test → commit → push → PR →
-squash-merge, writing `changes/<ts>-change.md` and linking it in
-`.gainwix/<component>/CHANGELOG.md`. ⭐ **`/gx-go` owns the merge here** (unlike
-`/gx-ping`, where the driver merges) — one item is in flight at a time, so there
-is nothing to serialise. Require back from it: **the PR URL and the merge SHA**;
-the report and the next command both need them.
+Then run the `/gx-go` workflow (`${CLAUDE_PLUGIN_ROOT}/commands/gx-go.md`) in
+**driven mode** on that item — worktree → build → test → commit → push → issue →
+PR → squash-merge, writing `.gainwix/<component>/changes/<ts>-change.md` and
+linking it in `.gainwix/<component>/CHANGELOG.md`.
+
+⛔ **Hand over the whole item, not its title.** `$GX ready` returns `detail`,
+`spec`, `deps` and `lane` beside `id` and `title` — pass them all. A title is a
+headline; the detail is the brief. A run given only the headline builds whatever
+the headline suggests, and reports success.
+
+⭐ **`/gx-go` owns the merge here** — unlike `/gx-ping`, where the driver merges.
+One item is in flight at a time, so there is nothing to serialise. **Require back
+from it:** the branch name, the issue URL, the PR URL, the merge SHA, and the
+change-record path — the report prints them.
 
 ```bash
 $GX move --id <SERIAL> --to completed --pr-link <pr-url>
@@ -149,7 +160,7 @@ both.**
 
 - **It never went green** — the tests or the build failed, nothing was pushed, no
   issue and no PR exist. ⭐ **Save the change record before you touch the
-  worktree**: `/gx-go` appends to `changes/<ts>-change.md` as it goes, and that
+  worktree**: `/gx-go` appends to `.gainwix/<component>/changes/<ts>-change.md` as it goes, and that
   partial file is the only account of what failed. Copy it out and commit it to
   `develop`, *then* remove the worktree.
 - **It went green but would not merge** — rebase conflict, or the re-test failed
@@ -194,10 +205,15 @@ that. It shows up as a test failure, which is the best available outcome.
 
 ### ⛔ The one that wedges the queue
 
-A P0 item that fails **stays at the front of wave 0**. `$GX ready` will not spill
-past it, so **every later run picks the same item, fails the same way, and merges
+An item that fails **goes back into its wave, and `$GX ready` will not spill past
+that wave.** So **every later run picks it up, fails the same way, and merges
 nothing** — and everything behind it never starts. In a six-item graph, one stuck
 item can hold four.
+
+⚠ **Priority has nothing to do with this.** `ready` returns the lowest *wave*
+that can start; priority only orders items **inside** it. A stuck **P2** wedges
+the queue exactly as hard as a stuck P0 — do not wait to recognise a "P0
+problem".
 
 ⚠ **Nothing in the tool prevents this**: there is no attempt counter, no backoff
 and no note on the item. **Say it in the report, in these terms** — "this item
@@ -212,8 +228,9 @@ one-line failure look like bad luck. It needs a person.
   Planned (inbox → backlog):
     • <title>                 <SERIAL>
 
-  Wave <N> — <K> item(s), in order:
-    ✓ <SERIAL>  <title>       PR #<n>  merged @ <sha>   changes/<ts>-change.md
+  Wave <N> — <size> item(s), in order:
+    ✓ <SERIAL>  <title>       PR #<n>  merged @ <sha>
+                              .gainwix/<component>/changes/<ts>-change.md
     ✗ <SERIAL>  <title>       never went green | would not merge
                               <reason verbatim>
                               returned to the backlog; blocking <M> item(s)
@@ -225,14 +242,15 @@ one-line failure look like bad luck. It needs a person.
 
 | Condition | Print |
 |---|---|
-| **Nothing merged this run** | `wave <N> failed entirely — nothing merged. Fix <SERIAL> before running again.` |
-| Closing `$GX ready` gives the **same** wave number | `wave <N> is unfinished — <K> item(s) came back. Run /gx-sing again to retry.` |
-| Closing `$GX ready` gives a **higher** number | `wave <N+1> — <M> item(s) ready. Run /gx-sing again.` |
+| **Nothing merged this run** | `wave <N> failed entirely — nothing merged. Fix <the failed SERIALs> before running again.` |
+| Closing `$GX ready` gives the **same** wave number | `wave <N> is unfinished — <its count> item(s) came back. Run /gx-sing again to retry.` |
+| Closing `$GX ready` gives a **higher** number | `wave <the number it returned> — <its count> item(s) ready. Run /gx-sing again.` |
 | `count` is `0`, something is in progress | `Nothing can start: <SERIALs> in progress, holding <SERIALs>.` |
 | `count` is `0`, nothing in progress | `The queue is empty.` |
 
 ⭐ **When items came back AND a later wave is otherwise clear, print both** — the
-retry line, then `and behind it: wave <N+1> — <M> item(s), once <SERIAL> lands.`
+retry line, then `and behind it: wave <the `next` field's wave> — <its count>
+item(s), once <SERIALs> land.`
 The closing call's `next` field is where that second number comes from. One
 number without the other is a half-truth.
 
@@ -251,7 +269,7 @@ operator acts on each differently.
 - **No inbox clearing dance.** `/gx-go` never touches
   `.gainwix/<component>/inbox.md`; `/gx-next` consumes from it and commits the
   result. The tree is clean between steps — no recovery needed.
-- **Every shipped item gets its own `changes/<ts>-change.md`** via `/gx-go`,
+- **Every shipped item gets its own `.gainwix/<component>/changes/<ts>-change.md`** via `/gx-go`,
   linked from `.gainwix/<component>/CHANGELOG.md`.
 - **One driver at a time.** Don't run a second `/gx-sing`/`/gx-ping` against the
   same `develop` concurrently — they would race the queue files and the tip.

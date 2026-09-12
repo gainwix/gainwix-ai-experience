@@ -175,3 +175,20 @@ test("⛔ an item somebody already took is not counted into the next wave either
   assert.deepEqual(now.items.map((i) => i.id), ["AB-001"], "B is taken, so it is not offered");
   assert.deepEqual(now.next, { wave: 1, count: 1 }, "and it is not counted as coming up either");
 });
+
+test("⛔ ready hands over the brief, not just the headline", () => {
+  // The drivers name an item to /gx-go instead of letting it pick. If `ready`
+  // returns only a title, the driver has nothing to build FROM — and nothing
+  // errors, it just builds whatever the title suggests.
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  gx(root, "add", "--title", "Session auth", "--detail", "Cookie sessions, 30-day expiry, CSRF on POST",
+     "--spec", "Spec §4.3", "--lane", "auth", "--pri", "P0", "--size", "M");
+  gx(root, "add", "--title", "Audit log", "--deps", "AB-001");
+
+  const [first] = JSON.parse(gx(root, "ready")).items;
+  assert.equal(first.detail, "Cookie sessions, 30-day expiry, CSRF on POST", "the brief travels");
+  assert.equal(first.spec, "Spec §4.3", "and where it came from");
+  assert.deepEqual(first.deps, [], "and what it waits on");
+  assert.equal(first.lane, "auth");
+});

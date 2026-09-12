@@ -125,12 +125,18 @@ whole thing as one item. Shape:
   `queued`→`WIP`) → `/gx-go` (subordinate of #<N>) → `/gx-qa`/`/gx-qbugs` (`WIP`→`DONE`).
   Never invent an issue reference when the item has none.
 
-## Step 3 — Append the task to the backlog
+## Step 3 — Nothing. `$GX add` already did it.
 
-- Read the backlog (`.gainwix/<component>/backlog.html`). Append the planned task(s) to the **END** of the
-  `## Backlog Items` section (after any existing tasks; preserve the
-  instructions region and the `### Autonomy preamble` above it untouched).
-- Newest tasks go last, so `/gx-go`'s top-down read processes the backlog FIFO.
+⛔ **Do not open `backlog.html` and do not append anything to it.** The `$GX add`
+in Step 2 wrote the item, recomputed every wave from the new dependency graph,
+and rendered the whole file. A hand-append is overwritten on the next write or —
+worse — kept beside a dependency order that no longer matches it.
+→ `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`
+
+⚠ **This step used to say "append to the END of `## Backlog Items`".** That was
+the markdown backlog, which no longer exists; the HTML has no such section, and
+position carries no meaning in it. **Order comes from `Depends on`, nothing
+else** — so where an item sits in the file decides nothing.
 
 ## Step 4 — Remove the consumed item from .gainwix/<component>/inbox.md
 
@@ -164,11 +170,11 @@ Per the project convention, the queue mutation lands directly on `develop`.
   formatting):
 
   ```
-  chore: plan ACTION-ITEMS entry into BACKLOG — <one-line title>
+  chore(next): plan "<one-line title>" into the backlog
 
-  /gx-next consumed the top .gainwix/<component>/inbox.md raw item, planned it into an
-  executable task, and appended that task to the backlog (## Backlog Items).
-  The consumed raw item was removed from .gainwix/<component>/inbox.md.
+  /gx-next consumed the top raw item from .gainwix/<component>/inbox.md and
+  added it to .gainwix/<component>/backlog.html with $GX add, which
+  recomputed the waves. The consumed raw item was removed from the inbox.
 
   Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
   ```
