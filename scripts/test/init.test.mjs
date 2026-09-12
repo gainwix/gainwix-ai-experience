@@ -166,3 +166,26 @@ test("a second component sits beside the first, not on top of it", () => {
     "API",
   );
 });
+
+test("⛔ the pre-approval the agent reads says how far it reaches: one wave", () => {
+  // The preamble is the only thing /gx-go, /gx-sing and /gx-ping treat as
+  // binding. If the wave boundary is not written IN IT, a driver that finds a
+  // full queue and no stated limit has every reason to drain it.
+  const root = tmpRepo({});
+  create(root, "admin", "AB", { render, computeWaves });
+  const preamble = fs.readFileSync(path.join(root, ".gainwix/autonomy.md"), "utf8");
+
+  assert.match(preamble, /ONE WAVE/, "the limit is stated, not implied");
+  assert.match(
+    preamble,
+    /Nothing here pre-approves running the queue to the bottom/,
+    "and stated as a prohibition, so it cannot be read as a default",
+  );
+  assert.match(preamble, /the next wave depends on this\s+one having merged/i, "with the reason");
+  assert.match(
+    preamble,
+    /done when it has \*\*merged\*\*/,
+    "⛔ merged, not compiled — the rule the whole graph rests on",
+  );
+  assert.doesNotMatch(preamble, /\\`/, "no escaped backticks leaked out of the template literal");
+});

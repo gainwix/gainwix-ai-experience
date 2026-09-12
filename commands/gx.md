@@ -25,8 +25,9 @@ Get started:
 Build & ship (changes → PR + change record):
 - `/gx-next` — plan the top `.gainwix/<component>/inbox.md` idea into a backlog task.
 - `/gx-go` — run one task end-to-end (branch → test → PR → squash-merge) + a `.gainwix/<component>/changes/*.md` record.
-- `/gx-sing` — serial loop: plan one + ship one, repeat until both queues drain.
-- `/gx-ping` — parallel loop: build a conflict-free batch (worktree per item), merge serially.
+- `/gx-sing` — **one wave**, worked one item at a time, each merged before the next — then stop.
+- `/gx-ping` — **one wave**, its items built at the same time (worktree each), merged serially — then stop.
+  ⛔ Neither runs the queue to the bottom: the next wave needs this one **merged**. Run it again.
 
 QA:
 - `/gx-qa` — end-to-end browser + API QA run → screenshotted report.

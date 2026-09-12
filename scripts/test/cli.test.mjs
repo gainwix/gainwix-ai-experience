@@ -123,3 +123,55 @@ test("issue and PR links are written into the file they land in", () => {
     /pull\/9/,
   );
 });
+
+// ⛔ Stage 5 — "run only one wave per execution but that one wave will kickoff
+// parallel execution paths." A driver that stops at the wave boundary has to be
+// able to say what it stopped in FRONT of, or "stopped" and "finished" print the
+// same thing and the operator cannot tell a halt from a completed queue.
+
+test("⭐ the next-wave preview is what actually comes ready once this wave merges", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  gx(root, "add", "--title", "Schema", "--size", "M");
+  gx(root, "add", "--title", "Auth", "--size", "S");
+  gx(root, "add", "--title", "API", "--deps", "AB-001");
+  gx(root, "add", "--title", "Docs", "--deps", "AB-001 AB-002");
+  gx(root, "add", "--title", "UI", "--deps", "AB-003");
+
+  const now = JSON.parse(gx(root, "ready"));
+  assert.deepEqual(now.items.map((i) => i.id), ["AB-001", "AB-002"]);
+  assert.deepEqual(now.next, { wave: 1, count: 2 }, "predicted before it happened");
+
+  // Run the wave for real — picked up, then merged, exactly as a driver does it.
+  for (const id of ["AB-001", "AB-002"]) gx(root, "move", "--id", id, "--to", "in-progress");
+  for (const id of ["AB-001", "AB-002"]) gx(root, "move", "--id", id, "--to", "completed");
+
+  const after = JSON.parse(gx(root, "ready"));
+  assert.equal(after.wave, now.next.wave, "the prediction named the right wave");
+  assert.equal(after.count, now.next.count, "and the right number of items");
+  assert.deepEqual(after.items.map((i) => i.id), ["AB-003", "AB-004"]);
+});
+
+test("the last wave predicts nothing after it, so a driver can say 'done' and mean it", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  gx(root, "add", "--title", "Only", "--size", "S");
+  gx(root, "add", "--title", "Also", "--size", "S");
+
+  const now = JSON.parse(gx(root, "ready"));
+  assert.equal(now.count, 2);
+  assert.equal(now.next, null, "nothing behind it — the queue really is empty after this");
+});
+
+test("⛔ an item somebody already took is not counted into the next wave either", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  gx(root, "add", "--title", "A", "--size", "S");
+  gx(root, "add", "--title", "B", "--size", "S");
+  gx(root, "add", "--title", "C", "--deps", "AB-001");
+  gx(root, "move", "--id", "AB-002", "--to", "in-progress");
+
+  const now = JSON.parse(gx(root, "ready"));
+  assert.deepEqual(now.items.map((i) => i.id), ["AB-001"], "B is taken, so it is not offered");
+  assert.deepEqual(now.next, { wave: 1, count: 1 }, "and it is not counted as coming up either");
+});

@@ -165,15 +165,22 @@ switch (cmd) {
     const comp = component();
     const stages = loadComponent(root, comp);
     const all = computeWaves(Object.values(stages).flatMap((s) => s.items));
+    const merged = stages.completed.items.map((i) => i.id);
+    const picked = stages["in-progress"].items.map((i) => i.id);
     // ⛔ Merged unblocks. Picked up does not — it only means "already taken".
-    const { wave, items } = readyWave(
-      all,
-      stages.completed.items.map((i) => i.id),
-      stages["in-progress"].items.map((i) => i.id),
-    );
+    const { wave, items } = readyWave(all, merged, picked);
+    // ⭐ What the driver stops in FRONT of. A driver that runs one wave and
+    // halts has to say what a second run would pick up — otherwise "stopped"
+    // and "finished" print the same and the operator cannot tell them apart.
+    const after = readyWave(all, [...merged, ...items.map((i) => i.id)], picked);
     console.log(
       JSON.stringify(
-        { wave, count: items.length, items: items.map((i) => ({ id: i.id, title: i.title, pri: i.pri, size: i.size })) },
+        {
+          wave,
+          count: items.length,
+          items: items.map((i) => ({ id: i.id, title: i.title, pri: i.pri, size: i.size })),
+          next: after.wave === null ? null : { wave: after.wave, count: after.items.length },
+        },
         null,
         2,
       ),

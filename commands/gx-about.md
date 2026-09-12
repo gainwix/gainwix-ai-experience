@@ -136,8 +136,9 @@ Step 0). This is the important part:
   reason from, not what you paste in here.
 - **One self-contained, one-PR-sized idea per `- ` line.**
 - **Order by dependency, foundational first** — auth, core entities/roles, the
-  central data model before the workflows that build on them — so a single
-  `/gx-sing` / `/gx-ping` run can chomp the list top-to-bottom.
+  central data model before the workflows that build on them. ⭐ **That order is
+  what the waves are computed from**, and it decides how much a single
+  `/gx-sing` / `/gx-ping` run can take: each runs **one wave** and stops.
 - **Never** touch the marker line or anything above it.
 
 ## Step 5 — 🚦 GATE 2 (verify) + report
@@ -155,7 +156,8 @@ Close with the next steps, plain-spoken:
 
 - **Plan + ship one item:** `/gx-next` (plan the top idea into the backlog (`.gainwix/<component>/backlog.html`)) →
   `/gx-go` (execute it end-to-end).
-- **Automate the whole queue:** `/gx-sing` (serial) or `/gx-ping` (parallel).
+- **Work a whole wave:** `/gx-sing` (one at a time) or `/gx-ping` (at the same
+  time). ⛔ Each does **one wave** and stops — run it again for the next.
 - **Prefer GitHub-tracked intake?** Capture ideas as issues with `/gx-issue-add`
   and pull them in with `/gx-issue-pick`, alongside (or instead of) the seeded list.
 - **When you're ready to ship to the cloud:** `/gx-sim` then `/gx-gcp-deploy`.

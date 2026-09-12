@@ -199,7 +199,8 @@ Print a short summary:
   labeling, not code execution.
 - Never touch the `<!-- Add action items below this line -->` marker or the
   instructions / autonomy-preamble regions of either file.
-- **`/gx-sing` note:** `/gx-sing` (formerly `/ang`) chains `/gx-next` + `/gx-go`. With this
-  inverted `/gx-next`, the `/gx-sing` flow means "plan the top ACTION-ITEMS entry into
-  BACKLOG, then `/gx-go` the top BACKLOG task" — take the next item, work it, come
-  back for more.
+- **`/gx-sing` note:** `/gx-sing` (formerly `/ang`) chains `/gx-next` + `/gx-go`:
+  plan the top raw idea from `.gainwix/<component>/inbox.md` into the backlog,
+  then `/gx-go` the items of **the one wave that can start** — one at a time, each
+  merged before the next. ⛔ **It stops at the wave boundary**, however much is
+  left in the queue; the next wave needs this one merged.

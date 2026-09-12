@@ -184,6 +184,19 @@ includes:
 
 **Proceed without asking for approval and make reasonable assumptions.**
 
+## ⛔ How far that reaches: ONE WAVE
+
+**A wave, and then a stop.** \`/gx-sing\` and \`/gx-ping\` are pre-approved to plan,
+build, test and merge the items of **the one wave that can start right now** — and
+then to end the run and report. The wave behind it is a separate execution and
+needs a separate invocation.
+
+Items in one wave do not depend on each other; **the next wave depends on this
+one having merged.** Carrying straight on would mean building on a foundation
+that is still being written.
+
+⛔ **Nothing here pre-approves running the queue to the bottom.**
+
 ## ⛔ What is never pre-approved
 
 - **Anything that reaches production.** The production gate asks every time, on

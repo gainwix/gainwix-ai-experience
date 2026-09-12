@@ -90,6 +90,15 @@ unpick.
   --to backlog`. An item stranded in `in-progress.html` blocks everything behind
   it and nothing will say so.
 
+⚠ **Backlog mode is for a person running `/gx-go` on its own.** `/gx-sing` and
+`/gx-ping` do **not** use it — they capture their wave up front and hand this
+workflow a **named** item, doing **every** `$GX move` themselves — `in-progress`,
+`completed`, and the put-back below. ⛔ **When a driver named the item, do not make
+any of those moves here**: the driver will make it too, and the second one exits
+non-zero with *"already in <stage>"*, which a driver can read as a hard failure. A driver that let `/gx-go` choose would re-pick an item that had just
+failed and gone back to the backlog, because `$GX ready` offers it again straight
+away.
+
 - **Interactive mode** — a plain conversational prompt requesting a code change,
   OR `/gx-go <task>` with an inline task. The task is that prompt. **Do not read
   the backlog and do not move anything** (you still read `.gainwix/autonomy.md`

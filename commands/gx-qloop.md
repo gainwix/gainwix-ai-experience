@@ -17,8 +17,22 @@ disable-model-invocation: true
 the existing `/gx-qa` → `/gx-qbugs` → `/gx-ping` commands in a loop until a `/gx-qa` run
 reports **zero failures**, then exits. It is the autopilot for the find → file →
 fix → re-QA cycle: one command instead of hand-running `/gx-qa`, `/gx-qbugs`, `/gx-ping`,
-`/gx-qa`, … yourself. It runs under the `### Autonomy preamble (read first)` in
-the backlog (`.gainwix/<component>/backlog.html`) — **no confirmation prompts** between sub-commands.
+`/gx-qa`, … yourself. It runs under `.gainwix/autonomy.md` — **no confirmation
+prompts** between sub-commands.
+
+## ⚠ This loops, and the one-wave rule still holds
+
+`/gx-sing` and `/gx-ping` run **one wave per execution** and stop. `/gx-qloop`
+calls `/gx-ping` **repeatedly** — and that is not a way around the rule:
+
+- **Each `/gx-ping` call is still one wave**, merged before anything else starts.
+- **Every iteration is gated on a fresh `/gx-qa` run**, so nothing advances on
+  unverified work — which is the thing the wave rule exists to prevent.
+- The loop is **capped** (max-iteration, no-progress, nothing-to-fix).
+
+⚠ **If a round of fixes spans more than one wave** — one fix depends on another —
+that iteration's `/gx-ping` ships only the first wave. The rest are picked up by
+the next iteration, after QA has re-run. That is slower and it is correct.
 
 `/gx-qloop` is a **meta / orchestrator** command: it COMPOSES the three commands and
 does NOT reimplement them. Each keeps its own contract — `/gx-qa` and `/gx-qbugs` are

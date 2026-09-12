@@ -26,8 +26,9 @@ Explain that one command in depth — its purpose, exactly what happens when the
 Dev-workflow commands (the build/QA pipeline; their full recipes live in each command file under `${CLAUDE_PLUGIN_ROOT}/commands/` — read that file for the authoritative behavior):
 - **/gx-go** — Run one code-changing task end-to-end under the `.gainwix/autonomy.md` preamble: branch → test → commit → push → issue → PR → squash-merge, and record a timestamped `.gainwix/<component>/changes/*.md` (linked from `.gainwix/<component>/CHANGELOG.md`). Backlog mode takes the next item from the wave that can start; interactive mode takes the prompt. Mandatory for code changes; never touches `.gainwix/<component>/inbox.md`.
 - **/gx-next** — Plan the top raw idea in `.gainwix/<component>/inbox.md` into a detailed executable task appended to the backlog (`.gainwix/<component>/backlog.html`). Plans only (no code); moves a tracked issue `queued`→`WIP`.
-- **/gx-sing** — Serial loop of `/gx-next` + `/gx-go`: plan one, ship one, repeat until both queues empty.
-- **/gx-ping** — Parallel sibling of `/gx-sing`: build a conflict-free batch (≤5, one worktree each), integrate serially (rebase → re-test → squash-merge).
+- **/gx-sing** — `/gx-next` + `/gx-go` over **one wave**: plan from the inbox, then work the wave one item at a time, each merged before the next begins, then **stop**.
+- **/gx-ping** — Parallel sibling of `/gx-sing`, same scope: **one wave**, its items built at the same time (≤5 per group, one worktree each), integrated serially (rebase → re-test → squash-merge), then **stop**.
+  ⛔ **One wave per execution.** Items in a wave never depend on each other; the next wave depends on this one having **merged**, so neither driver runs on into it — run the command again.
 - **/gx-qa** — End-to-end QA: boot the stack, run every `qa/QA.md` workflow through Playwright/chromium, screenshot each step, emit `qa/RUN-REPORT-<ts>.html`, triage failures (frontend vs backend). Operational (commits `qa/` artifacts); not a `/gx-go` change.
 - **/gx-qbugs** — Triage the latest `/gx-qa` run's failures into discrete bug GitHub issues + fix idea in `.gainwix/<component>/inbox.md`s (idempotent via `[QA:<slug>]`).
 - **/gx-qloop** — Convergence loop: `/gx-qa` → `/gx-qbugs` → `/gx-ping` until a QA run is green (bounded by a max-iteration / no-progress / nothing-to-fix cap).

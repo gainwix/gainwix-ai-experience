@@ -85,6 +85,13 @@ it unblocks nothing.
 ⛔ **`ready` returns ONE wave.** The parallelism happens inside it, across
 agents. It never spills into the next wave.
 
+⛔ **And neither do the drivers.** `/gx-sing` and `/gx-ping` each run **one wave
+per execution** and stop — `/gx-sing` working it one item at a time, `/gx-ping`
+building the items together and merging them serially. Whatever is left in the
+queue, they stop at the boundary and say which wave is next. ⭐ **Run the command
+again for it.** `.gainwix/autonomy.md` states the same limit, and that is the
+file an agent treats as binding.
+
 ⭐ **Serials are permanent and never reused.** `AB-014` means the same thing a
 year later, which is what lets a PR reference one.
 
