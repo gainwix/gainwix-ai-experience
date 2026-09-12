@@ -51,8 +51,9 @@ GX="node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs"
 $GX components
 ```
 
-One component and it is chosen for you. More than one and `$GX` refuses and names
-them — ask which, then `$GX use --component <name>`. ⛔ **Never guess between
+One component and it is chosen for you. ⚠ **With more than one, this call just
+lists them and exits 0** — the refusal comes on the next `$GX` call. Read the
+list: more than one name means ask which, then `$GX use --component <name>`. ⛔ **Never guess between
 components:** a task written into the wrong backlog is silent and expensive to
 unpick.
 

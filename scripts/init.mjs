@@ -205,6 +205,22 @@ that is still being written.
 - **Editing files under \`.gainwix/\` by hand.** Use the tool; it recomputes the
   dependency order with the change.
 
+## ⛔ The project's own commands — FILL THESE IN
+
+Every run reads the test and lint commands **from here**. They are the gate: a
+task is not finishable until they pass.
+
+| | |
+|---|---|
+| Install / setup | \`<command>\` |
+| Test | \`<command>\` |
+| Lint | \`<command>\` |
+| Coverage *(optional)* | \`<command>\` |
+
+⚠ **Until these are filled in, every run has to guess them from the repo** — and
+guess again on the next task, and possibly differently. One minute here saves
+that on every task afterwards.
+
 ## The one rule about finishing
 
 A task is done when it has **merged**, not when it compiles and not when the

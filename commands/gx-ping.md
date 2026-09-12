@@ -63,8 +63,10 @@ GX="node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs"
 $GX components
 ```
 
-⛔ **Do this before anything else.** One component and it is chosen for you; more
-than one and `$GX` **exits non-zero** and names them — ask which, then
+⛔ **Do this before anything else.** One component and it is chosen for you.
+⚠ **With more than one, `components` just lists them and exits 0** — the refusal
+comes on the *next* `$GX` call, which is one command later than you might expect.
+So **read the list**: if it holds more than one name, ask which, then
 `$GX use --component <name>`. Every later `$GX` call and `/gx-next` resolve the
 component independently, so an unbound choice means planning into one component
 and building from another.
@@ -177,10 +179,17 @@ the kanban issue body** — `CHANGELOG.md` and a tracked issue's body are **shar
 and two teams writing either at once conflict. The driver does all three after
 merging.
 
-⛔ **Each team must return: the branch name, the issue URL, the PR URL, and the
-path of its `.gainwix/<component>/changes/<ts>-change.md`.** The driver merges and
-writes those links, and cannot go looking inside a finished subagent's worktree
-for them. A team that reports success without all four has not finished.
+⛔ **Each team must return: the branch name, its worktree path, the issue URL
+and number, the PR URL, and the path of its
+`.gainwix/<component>/changes/<ts>-change.md`.** The driver merges, tidies up and
+writes those links, and cannot go rummaging inside a finished subagent's worktree
+for any of it. A team that reports success without all five has not finished.
+
+⛔ **A team that FAILS must push its branch anyway, carrying its partial change
+record, and return the branch name** — or, if it never got as far as a branch,
+paste the record's text into its result. That partial file is the only account of
+what went wrong, and once the team is done nobody can reach into its worktree to
+get it.
 
 ⛔ **The teams make no `$GX move` at all.** Every move is the driver's — pick-up,
 completion and put-back alike.
@@ -188,8 +197,10 @@ completion and put-back alike.
 ### 5 · Integrate serially
 
 Merge the wave's PRs **one at a time**: rebase on the latest `origin/develop`,
-re-run the affected tests, then `gh pr merge --squash --delete-branch`. After
-each merge:
+re-run the affected tests, **remove that item's worktree**, then
+`gh pr merge --squash --delete-branch`. ⚠ **The worktree goes before the branch
+delete** — `--delete-branch` fails while a worktree still holds it. After each
+merge:
 
 ```bash
 $GX move --id <SERIAL> --to completed --pr-link <pr-url>
@@ -198,17 +209,32 @@ $GX move --id <SERIAL> --to completed --pr-link <pr-url>
 ⭐ **That move is what unblocks the next wave** — nothing else does. Then, for
 each merged item:
 
+
+⛔ **Get onto an updated `develop` first — the merge happened on the server.**
+
+```bash
+git -C <the main checkout> checkout develop && git -C <the main checkout> pull --ff-only
+```
+
+⚠ **Without this the finalize fails and the push is rejected.** The squash-merge
+is server-side, so the change record you are about to edit **by path** is on
+`origin/develop` and not in your tree; and `git push` from a stale `develop` is
+non-fast-forward — which both this file and `/gx-go` classify as a **Hard STOP
+that ends the run.** ⚠ `git checkout develop` also **errors outright while a
+worktree holds that branch**, which is why the worktree goes first.
+
+Then, for each merged item:
+
 - finalize its `.gainwix/<component>/changes/<ts>-change.md` (issue/PR links,
   timing) and link it in `.gainwix/<component>/CHANGELOG.md`;
-- ⛔ **if the item tracks a kanban issue `#<N>`, append `- [ ] #<the team's new
-  issue>` to that issue's sub-issue list now** — the teams were told to skip it
-  because two of them racing one issue body loses an edit. **Nobody else does
-  this**, and `/gx-qa` only advances the card once it can see every subordinate;
-- remove its worktree.
+- ⛔ **if it tracks a kanban issue `#<N>`, append `- [ ] #<the team's new issue>`
+  under that issue's `## Sub-issues (opened by /gx-go)` heading** (create the
+  heading if absent). The teams were told to skip this because two of them racing
+  one issue body loses an edit. **Nobody else does it**, and `/gx-qa` only
+  advances the card once it can see every subordinate.
 
-⛔ **Then commit and push what you just wrote.** The finalized change records and
-the `CHANGELOG.md` edits are yours, and nothing else commits them. Left dirty,
-the next run branches off a dirty tree.
+⛔ **Then commit and push what you wrote.** The finalized change records and the
+`CHANGELOG.md` edits are yours, and nothing else commits them.
 
 ### 6 · STOP, and say what is next
 
@@ -238,10 +264,12 @@ and nobody has looked at why. Retrying it is the next run's job.
 **Two different failures, with different debris. Do not run one procedure for
 both.**
 
-- **A team never went green** — nothing pushed, no PR. ⭐ **Save its change record
-  before removing the worktree**: `/gx-go` appends to `.gainwix/<component>/changes/<ts>-change.md` as
-  it goes, and that partial file is the only account of what failed. Copy it out
-  and commit it to `develop`, *then* remove the worktree.
+- **A team never went green** — no PR. ⭐ **Its partial change record is the only
+  account of what failed**, which is why a failing team pushes its branch (or
+  pastes the text) rather than just reporting an error. Commit that record to
+  `develop`, then remove the worktree. ⛔ **Do not plan to read it out of the
+  worktree yourself** — by the time the team's result reaches you, that is exactly
+  the place you cannot go.
 - **A merge conflicts, or the rebased re-test fails** — a branch and a PR exist:
   close or clearly park the PR and delete the pushed branch. Let the next run
   retry it, likely serially via `/gx-sing`.
@@ -307,7 +335,8 @@ like bad luck. It needs a person.
 
 ⭐ **When items came back AND a later wave is otherwise clear, print both** — the
 retry line, then `and behind it: wave <the `next` field's wave> — <its count>
-item(s), once <SERIALs> land.`
+item(s), once <SERIALs> land.` ⚠ **`next` is `null` when nothing follows** — then
+there is no second line to print, not a line saying "null".
 The closing call's `next` field is where that second number comes from.
 
 ⭐ **"Stopped at the wave boundary", "the whole wave failed" and "finished the

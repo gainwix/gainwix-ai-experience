@@ -189,3 +189,17 @@ test("⛔ the pre-approval the agent reads says how far it reaches: one wave", (
   );
   assert.doesNotMatch(preamble, /\\`/, "no escaped backticks leaked out of the template literal");
 });
+
+test("⛔ the preamble has somewhere to put the test and lint commands", () => {
+  // /gx-go, /gx-ping and /gx-next all tell a run to take the project's test and
+  // lint commands "from the autonomy preamble". For three files to say that and
+  // the template to have no such line sends every team looking for something
+  // that was never written.
+  const root = tmpRepo({});
+  create(root, "admin", "AB", { render, computeWaves });
+  const preamble = fs.readFileSync(path.join(root, ".gainwix/autonomy.md"), "utf8");
+
+  assert.match(preamble, /\| Test \| /, "a row for the test command");
+  assert.match(preamble, /\| Lint \| /, "and one for lint");
+  assert.match(preamble, /FILL THESE IN/, "and it says they are the operator's to write");
+});

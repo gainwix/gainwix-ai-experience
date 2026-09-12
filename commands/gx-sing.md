@@ -51,8 +51,10 @@ GX="node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs"
 $GX components
 ```
 
-⛔ **Do this before anything else.** One component and it is chosen for you; more
-than one and `$GX` **exits non-zero** and names them — ask which, then
+⛔ **Do this before anything else.** One component and it is chosen for you.
+⚠ **With more than one, `components` just lists them and exits 0** — the refusal
+comes on the *next* `$GX` call, which is one command later than you might expect.
+So **read the list**: if it holds more than one name, ask which, then
 `$GX use --component <name>`. Every later `$GX` call and `/gx-next` resolve the
 component independently, so an unbound choice means planning into one component
 and building from another.
@@ -135,21 +137,37 @@ detail is the brief. Work given only the headline builds whatever the headline
 suggests, and reports success.
 
 ⛔ **Then YOU merge**, and only then: rebase on the latest `origin/develop`,
-squash-merge, delete the branch, **and remove the worktree** — `--delete-branch`
-fails while a worktree still holds it, and the leftover collides with a later
-run reaching for the same name. ⭐ **Driven mode never merges and never touches
+**remove the worktree**, then squash-merge with `--delete-branch`. ⚠ **That order
+matters** — deleting a branch a worktree still holds fails, and the leftover
+collides with a later run reaching for the same name. ⭐ **Driven mode never merges and never touches
 `CHANGELOG.md`, in either driver** — one rule, so nothing has to work out which
 driver it is under.
 
-**Then, as the driver:** finalize the change record (issue/PR links, timing) and
-link it in `.gainwix/<component>/CHANGELOG.md`; ⛔ **if the item tracks a kanban
-issue `#<N>`, append `- [ ] #<the new issue>` to its sub-issue list** — nobody
-else does, and `/gx-qa` only advances the card once it can see every subordinate.
-⛔ **Commit and push those writes.** They are yours, nothing else commits them,
-and the next item branches off `develop`.
+**Then, as the driver:**
+⛔ **Get onto an updated `develop` first — the merge happened on the server.**
 
-**Require back from the run:** the branch name, the issue URL, the PR URL, and
-the change-record path — the report prints them.
+```bash
+git -C <the main checkout> checkout develop && git -C <the main checkout> pull --ff-only
+```
+
+⚠ **Without this the finalize fails and the push is rejected.** The squash-merge
+is server-side, so the change record you are about to edit **by path** is on
+`origin/develop` and not in your tree; and `git push` from a stale `develop` is
+non-fast-forward — which both this file and `/gx-go` classify as a **Hard STOP
+that ends the run.** ⚠ `git checkout develop` also **errors outright while a
+worktree holds that branch**, which is why the worktree goes first.
+
+Now finalize the change record (issue/PR links, timing) and link it in
+`.gainwix/<component>/CHANGELOG.md`. ⛔ **If the item tracks a kanban issue
+`#<N>`, append `- [ ] #<the new issue>` under its `## Sub-issues (opened by
+/gx-go)` heading** (create the heading if absent) — nobody else does, and
+`/gx-qa` only advances the card once it can see every subordinate. **Commit and
+push those writes**; nothing else commits them, and the next item branches off
+`develop`.
+
+**Require back from the run:** the branch name, its **worktree path**, the issue
+URL and number, the PR URL, and the change-record path — the driver needs every
+one of them to merge, tidy up and report.
 
 ```bash
 $GX move --id <SERIAL> --to completed --pr-link <pr-url>
@@ -272,7 +290,8 @@ one-line failure look like bad luck. It needs a person.
 
 ⭐ **When items came back AND a later wave is otherwise clear, print both** — the
 retry line, then `and behind it: wave <the `next` field's wave> — <its count>
-item(s), once <SERIALs> land.`
+item(s), once <SERIALs> land.` ⚠ **`next` is `null` when nothing follows** — then
+there is no second line to print, not a line saying "null".
 The closing call's `next` field is where that second number comes from. One
 number without the other is a half-truth.
 
