@@ -104,7 +104,8 @@ COMPONENT=<the resolved component>
   it and nothing will say so.
 
 - **Driven mode** — a driver (`/gx-sing`, `/gx-ping`) handed you **one item's
-  serial, title, detail, spec and lane**, taken from its captured `$GX ready`.
+  serial, title, detail, spec, deps and lane**, taken from its captured
+  `$GX ready`.
   **That item is the task; do not read the backlog and do not choose.**
 
   ⛔ **Make no `$GX move` at all in this mode** — not `in-progress`, not
@@ -112,13 +113,16 @@ COMPONENT=<the resolved component>
   non-zero with *"already in \<stage\>"*, which a driver can read as a hard
   failure and abort a run it had already handled.
 
-  ⛔ **Never fall back to backlog mode here.** Under `/gx-ping` the whole wave is
-  already in `in-progress`, so `$GX ready` returns **the next wave** — you would
-  build something whose foundations have not merged.
+  ⛔ **Never fall back to backlog mode here.** The driver captured its wave
+  before moving anything, and `$GX ready` mid-run no longer describes it: under
+  `/gx-ping` the whole wave is already `in-progress`, so what comes back is **the
+  next wave**, whose foundations have not merged. Under `/gx-sing` you would take
+  an item out of the driver's order. Either way you build the wrong thing.
 
   ⛔ **You do not merge.** Ignore step 7 of Step 2. Open the PR and stop — the
-  driver merges, serially, after every team in your group has finished. That
-  serialisation is the only thing keeping concurrent PRs from racing one trunk.
+  driver merges, serially, once the work it dispatched alongside yours has
+  finished. That serialisation is the only thing keeping concurrent PRs from
+  racing one trunk.
 
   ⛔ **Skip Step 4 entirely** — the finalize pass and the `CHANGELOG.md` link.
   **That file is shared**, and two teams appending to it on two branches conflict
@@ -126,9 +130,12 @@ COMPONENT=<the resolved component>
   still write your change record **append-as-you-go** during the run: if you
   crash, that partial file is the only account of what happened.
 
-  ⛔ **Skip the kanban body edit** in Step 4b for the same reason: it is a
-  read-modify-write of one GitHub issue that two teams can race. Opening **your
-  own** issue in Step 5 is still yours.
+  ⛔ **Skip the kanban sub-issue edit in Step 2** for the same reason: appending
+  `- [ ] #<new>` to the tracked issue's body is a read-modify-write of one GitHub
+  issue that two teams can race. **Report your new issue's number to the driver
+  and let it make that edit** — it is not optional, it is how `/gx-qa` later sees
+  the subordinate and advances the card. Opening **your own** issue is still
+  yours.
 
   ⚠ **The driver must give you two things beyond the item**, because
   `${CLAUDE_PLUGIN_ROOT}` is a shell expansion that does not survive into a prompt
@@ -213,6 +220,10 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
    before shipping.
 3. Commit with a descriptive message ending in the standard `Co-Authored-By`
    footer (include any refreshed coverage report when the suite ran).
+   ⛔ **Stage `.gainwix/<component>/changes/<ts>-change.md` in this commit too.**
+   In driven mode the driver writes the merge links into that file **by path**
+   after merging — which only works if the file reached `develop`. Left
+   uncommitted in a worktree, it dies with the worktree.
 4. Push the branch.
 5. Open a GH issue describing the change (best-effort — if blocked, note it in
    the timeline and continue). **`/gx-go` ALWAYS opens its OWN new issue for the

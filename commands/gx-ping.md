@@ -105,8 +105,8 @@ $GX ready
 ```
 
 **Hold `items` for the whole run.** Once its items move to `in-progress` they
-count as *taken*, so a second `$GX ready` mid-run returns nothing — **the wave is
-not re-derivable after you have started it.** `next` is the wave standing behind
+count as *taken*, so a second `$GX ready` mid-run describes a different state and
+not this wave — **the captured list is not re-derivable after you start it.** `next` is the wave standing behind
 this one; say both out loud now, so the size of the run is known before it
 starts.
 
@@ -195,9 +195,20 @@ each merge:
 $GX move --id <SERIAL> --to completed --pr-link <pr-url>
 ```
 
-⭐ **That move is what unblocks the next wave** — nothing else does. Finalize the
-item's `.gainwix/<component>/changes/<ts>-change.md` (issue/PR links, timing), link it in
-`.gainwix/<component>/CHANGELOG.md`, and remove its worktree.
+⭐ **That move is what unblocks the next wave** — nothing else does. Then, for
+each merged item:
+
+- finalize its `.gainwix/<component>/changes/<ts>-change.md` (issue/PR links,
+  timing) and link it in `.gainwix/<component>/CHANGELOG.md`;
+- ⛔ **if the item tracks a kanban issue `#<N>`, append `- [ ] #<the team's new
+  issue>` to that issue's sub-issue list now** — the teams were told to skip it
+  because two of them racing one issue body loses an edit. **Nobody else does
+  this**, and `/gx-qa` only advances the card once it can see every subordinate;
+- remove its worktree.
+
+⛔ **Then commit and push what you just wrote.** The finalized change records and
+the `CHANGELOG.md` edits are yours, and nothing else commits them. Left dirty,
+the next run branches off a dirty tree.
 
 ### 6 · STOP, and say what is next
 
@@ -306,11 +317,11 @@ things for the operator to do.
 ## Notes
 
 - **`/gx-ping` vs `/gx-sing`.** Same scope — one wave, and both plan up to 5
-  inbox items first. Two real differences: `/gx-ping` builds the items together
-  and **the driver** merges them serially afterwards; `/gx-sing` works them one at
-  a time and lets `/gx-go` merge each itself. For a wave of one they do the same
-  work. Use `/gx-sing` when the wave's items all touch the same files anyway, or
-  to avoid the token cost.
+  inbox items first. **One real difference: concurrency.** `/gx-ping` builds the
+  items together; `/gx-sing` works them one at a time. ⭐ **In both, the driver
+  merges** — driven mode never does. For a wave of one they do the same work. Use
+  `/gx-sing` when the wave's items all touch the same files anyway, or to avoid
+  the token cost.
 - **Same session.** The parallel teams run inside this one session (Workflow
   subagents / parallel `Agent` calls), each isolated in its own git worktree —
   not separate Claude Code sessions.

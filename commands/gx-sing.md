@@ -94,8 +94,8 @@ $GX ready
 ```
 
 **Hold `items` for the whole run.** Once an item moves to `in-progress` it counts
-as *taken*, so a second `$GX ready` mid-run will not give the wave back — **it is
-not re-derivable after you start it.** `next` is the wave standing behind this
+as *taken*, so a second `$GX ready` mid-run describes a different state and not
+this wave — **the captured list is not re-derivable after you start it.** `next` is the wave standing behind this
 one; say both out loud now, so the size of the run is known before it begins.
 
 If `count` is `0`: say what is in progress and what it is holding up, and
@@ -114,28 +114,42 @@ $GX move --id <SERIAL> --to in-progress [--issue <issue-url>]
 already tracks an issue; `/gx-go` does not open one until after its tests are
 green, so at pick-up there is normally no URL.
 
-Then run the `/gx-go` workflow (`${CLAUDE_PLUGIN_ROOT}/commands/gx-go.md`) in
+Then follow the `/gx-go` workflow (`${CLAUDE_PLUGIN_ROOT}/commands/gx-go.md`) in
 **driven mode** on that item — worktree → build → test → commit → push → issue →
 PR — writing `.gainwix/<component>/changes/<ts>-change.md` as it goes.
 
-⛔ **Then YOU merge**, and only then: rebase on the latest `origin/develop`,
-squash-merge, delete the branch. Finalize the change record (issue/PR links,
-timing) and link it in `.gainwix/<component>/CHANGELOG.md` yourself. ⭐ **Driven
-mode never merges and never touches `CHANGELOG.md`, in either driver** — one
-rule, so nothing has to reason about which driver it is under.
+⭐ **Run it inline, in this session** — read the file and follow it yourself.
+There is one item in flight, so there is nothing to parallelise and no reason to
+delegate. `${CLAUDE_PLUGIN_ROOT}` expands normally here, which is the whole
+awkwardness `/gx-ping` has to work around.
+
+⚠ **If you do delegate it to a subagent, `/gx-ping`'s rules apply in full:**
+resolve the path and tell the team to READ the file (`/gx-go` is
+`disable-model-invocation: true`), and pass the **resolved `$GX` command line**
+and the **component name** — neither `${CLAUDE_PLUGIN_ROOT}` nor `COMPONENT`
+survives into a prompt, and without them the records land in `.gainwix//changes`.
 
 ⛔ **Hand over the whole item, not its title.** `$GX ready` returns `detail`,
-`spec`, `deps` and `lane` beside `id` and `title` — pass them all. A title is a
-headline; the detail is the brief. A run given only the headline builds whatever
-the headline suggests, and reports success.
+`spec`, `deps` and `lane` beside `id` and `title`. A title is a headline; the
+detail is the brief. Work given only the headline builds whatever the headline
+suggests, and reports success.
 
-⚠ **Give it two things beyond the item:** the **resolved** `$GX` command line and
-the **component name**. `${CLAUDE_PLUGIN_ROOT}` does not survive into a subagent
-prompt, and without `COMPONENT` bound, `/gx-go`'s records land in
-`.gainwix//changes`.
+⛔ **Then YOU merge**, and only then: rebase on the latest `origin/develop`,
+squash-merge, delete the branch, **and remove the worktree** — `--delete-branch`
+fails while a worktree still holds it, and the leftover collides with a later
+run reaching for the same name. ⭐ **Driven mode never merges and never touches
+`CHANGELOG.md`, in either driver** — one rule, so nothing has to work out which
+driver it is under.
 
-**Require back from it:** the branch name, the issue URL, the PR URL, and the
-change-record path — the report prints them.
+**Then, as the driver:** finalize the change record (issue/PR links, timing) and
+link it in `.gainwix/<component>/CHANGELOG.md`; ⛔ **if the item tracks a kanban
+issue `#<N>`, append `- [ ] #<the new issue>` to its sub-issue list** — nobody
+else does, and `/gx-qa` only advances the card once it can see every subordinate.
+⛔ **Commit and push those writes.** They are yours, nothing else commits them,
+and the next item branches off `develop`.
+
+**Require back from the run:** the branch name, the issue URL, the PR URL, and
+the change-record path — the report prints them.
 
 ```bash
 $GX move --id <SERIAL> --to completed --pr-link <pr-url>
@@ -275,7 +289,9 @@ operator acts on each differently.
   avoid the token cost of parallel teams.
 - **No inbox clearing dance.** `/gx-go` never touches
   `.gainwix/<component>/inbox.md`; `/gx-next` consumes from it and commits the
-  result. The tree is clean between steps — no recovery needed.
+  result. ⚠ **The tree is not clean by itself, though** — the driver's own
+  finalize and `CHANGELOG.md` writes are what make it dirty, which is why step 3
+  ends by committing them.
 - **Every shipped item gets its own `.gainwix/<component>/changes/<ts>-change.md`** via `/gx-go`,
   linked from `.gainwix/<component>/CHANGELOG.md`.
 - **One driver at a time.** Don't run a second `/gx-sing`/`/gx-ping` against the
