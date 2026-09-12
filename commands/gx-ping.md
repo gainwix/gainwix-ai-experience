@@ -96,6 +96,20 @@ here leaves it unsaid which of its other steps still apply.
 newly planned item with no dependencies lands in **wave 0** and is built in this
 same run, because the wave is read after this step, never before.
 
+⚠ **Planning can DISPLACE the wave that was ready, and you should say so when it
+does.** `ready` returns the **lowest wave number** among the items that can
+start. A newly planned item with no dependencies is **wave 0** — so on a backlog
+that has already worked past wave 0, planning one inbox idea makes wave 0 the
+lowest again, and that idea is the whole run. **Priority does not save you:** a
+P2 typed into the inbox this morning outranks a P0 that was ready, because
+priority only orders items *within* a wave.
+
+⭐ **It is not unsafe** — both were startable, so neither waits on the other — and
+the closing report's `next` line names what got pushed back. But if this run's
+wave is a brand-new item and something older was ready, **say that out loud in
+the report.** ⚠ To avoid it entirely, run the drivers with an empty inbox and
+plan separately with `/gx-next`.
+
 ### 2 · ⭐ Read the wave — once, here, after planning
 
 ```bash

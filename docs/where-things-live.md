@@ -107,6 +107,13 @@ year later, which is what lets a PR reference one.
 **Priority** decides what to pick first *within* a wave — never across waves, and
 never instead of dependencies.
 
+⚠ **A consequence worth knowing before it surprises you:** `ready` returns the
+**lowest** wave number among the items that can start, so **a brand-new item with
+no dependencies is wave 0 and jumps the whole queue** — even past a P0 sitting at
+wave 3 whose dependencies have all merged. Neither waits on the other, so nothing
+is unsafe; it is simply that **depth wins over priority**, and adding work
+re-points the front of the queue at it.
+
 ---
 
 ## The chain
