@@ -1,6 +1,6 @@
 ---
 name: gx-about
-description: Product discovery — interview whoever owns the product, then write what you learn into ABOUT.md and seed .gainwix/<component>/inbox.md with the first ideas. Run after /gx-init, before building.
+description: Product discovery — interview whoever owns the product, then write what you learn into ABOUT.md at the repo root (creating it if it is missing) and seed .gainwix/<component>/inbox.md with the first ideas. Run after /gx-init, before building.
 disable-model-invocation: true
 ---
 
@@ -10,18 +10,20 @@ disable-model-invocation: true
 
 # /gx-about — fill in ABOUT.md, then seed .gainwix/<component>/inbox.md from it
 
-`/gx-about` is the bridge between `/gx-init` (which scaffolds the **empty**
-templates) and the dev-workflow commands (`/gx-next` → `/gx-go`). It does two
+`/gx-about` is the bridge between `/gx-init` (which makes room under `.gainwix/`)
+and the dev-workflow commands (`/gx-next` → `/gx-go`). It does two
 things, each followed by a human verification gate:
 
-1. **Interview you** to fill in `ABOUT.md` — the single source of truth for what
-   your product is and why it exists.
+1. **Interview you** to write `ABOUT.md` — the single source of truth for what
+   your product is and why it exists. It lives at the repo root, and this command
+   creates it if it is not there yet.
 2. **Seed `.gainwix/<component>/inbox.md`** — turn that approved `ABOUT.md` into a prioritized,
    dependency-ordered list of raw feature ideas the rest of the workflow chomps
    through.
 
 Run it **in this conversation** — do NOT dispatch it as a background subagent (a
-subagent can't interview you). It writes **only** `ABOUT.md` and `.gainwix/<component>/inbox.md`:
+subagent can't interview you). It writes **only** `ABOUT.md` and `.gainwix/<component>/inbox.md`
+(plus, when the repo has more than one component, which one you picked):
 pure discovery and planning that gets you ready to build and ship. Building is
 `/gx-next`/`/gx-go`; deploying is `/gx-gcp-deploy`.
 
@@ -42,9 +44,34 @@ default I can override beats a question I can't answer.
 
 ## Step 0 — Pre-flight
 
-- **Require the scaffold.** Read `ABOUT.md` and `.gainwix/<component>/inbox.md` at the repo
-  root. If either is missing, STOP and tell me to run `/gx-init` first — it
-  scaffolds them; `/gx-about` fills them in, it doesn't create them.
+```bash
+GX="node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs"
+$GX components
+```
+
+- **The inbox needs `/gx-init`.** If `components` lists nothing, STOP and tell me
+  to run `/gx-init` first — it creates `.gainwix/<component>/inbox.md`, which this
+  command seeds.
+- **Pick the component.** One component and it is chosen for you — don't ask.
+  ⚠ With more than one, `components` just lists them and exits 0, so **read the
+  list**: ask which one these ideas belong to (`AskUserQuestion`), then
+  `$GX use --component <name>` so `/gx-next` plans from the same inbox.
+- **`ABOUT.md` lives at the repo root, and this command creates it.** It is the
+  developer's own document, not tool state, so it sits beside the code rather
+  than under `.gainwix/` (→ `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`).
+  ⛔ **`/gx-init` does not create it** — do not send me back there for it. If the
+  repo root has no `ABOUT.md`:
+  - Run `$GX detect`. If its `alreadyHas` lists somewhere the repo already keeps
+    specs or an overview (`about/`, `specs/`, `docs/specs`), tell me what it found
+    and ask (`AskUserQuestion`): **Create `ABOUT.md` and read those in**
+    (recommended — they become source material for Step 1) or **Stop** (leave the
+    repo as it is).
+  - Otherwise — or once I agree — treat it as an **untouched template**: Step 3
+    creates it from `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/ABOUT.md`. Nothing is
+    written before the interview, so stopping half-way leaves no placeholder file
+    behind.
+  - ⛔ **Never overwrite an existing `ABOUT.md`.** What happens to one is decided
+    below.
 - **Detect prior state (never clobber silently):**
   - If `ABOUT.md` is still the **untouched template** (it still contains
     `<placeholder>` text and the scaffold guidance blockquote), go fill it in
@@ -103,7 +130,8 @@ confirm/adjust rather than asking from scratch.
 
 ## Step 3 — Write ABOUT.md, then 🚦 GATE 1 (verify)
 
-- Write the filled-in `ABOUT.md`: replace **every** `<placeholder>`, fill every
+- Write the filled-in `ABOUT.md` at the repo root — creating it from the template
+  if Step 0 found none: replace **every** `<placeholder>`, fill every
   table and section, and **remove the scaffold guidance blockquote and the
   `<!-- … -->` guidance notes**. Keep the section structure intact, and keep the
   closing **"Prompt — Generate Features From This Document"** section (Step 4 runs
@@ -132,9 +160,11 @@ Step 0). This is the important part:
   reason from, not what you paste in here.
 - **One self-contained, one-PR-sized idea per `- ` line.**
 - **Order by dependency, foundational first** — auth, core entities/roles, the
-  central data model before the workflows that build on them. ⭐ **That order is
-  what the waves are computed from**, and it decides how much a single
-  `/gx-sing` / `/gx-ping` run can take: each runs **one wave** and stops.
+  central data model before the workflows that build on them. `/gx-next` plans
+  from the top, so the foundations are in the backlog by the time the work that
+  needs them is planned. ⚠ **The order itself sets no waves** — those come only
+  from the dependencies `/gx-next` records — and each `/gx-sing` / `/gx-ping` run
+  takes **one wave** and stops.
 - **Never** touch the marker line or anything above it.
 
 ## Step 5 — 🚦 GATE 2 (verify) + report
@@ -161,7 +191,7 @@ Close with the next steps, plain-spoken:
 ## Notes
 
 - **Scope: discovery only.** `/gx-about` writes `ABOUT.md` + `.gainwix/<component>/inbox.md` and
-  nothing else. These are doc/queue edits, not a code change, so there's no PR and
+  nothing else (bar remembering the component, when there are several). These are doc/queue edits, not a code change, so there's no PR and
   no `.gainwix/<component>/changes/*.md` record (see `/gx-go`'s queue-edit exception); building and
   deploying come later.
 - **`ABOUT.md` is yours to own.** It's the product source-of-truth on purpose; this

@@ -95,7 +95,7 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | `/gx` | ✅ | One-line orientation. |
 | `/gx-help <cmd>` | ✅ | Deep dive on one command. |
 | `/gx-init` | ✅ | Set up the repo: detect what it builds, ask how you already keep specs and backlogs, and make room under `.gainwix/`. |
-| `/gx-about` | ✅ | Fill in `ABOUT.md` by interview, then seed `.gainwix/<component>/inbox.md` from it. Run after `/gx-init`. |
+| `/gx-about` | ✅ | Write `ABOUT.md` by interview (created at the repo root if missing), then seed `.gainwix/<component>/inbox.md` from it. Run after `/gx-init`. |
 
 **Build & ship the work** (ported from the AptonWorks dev pipeline — assume a `develop` trunk; the queue lives under `.gainwix/<component>/`, `qa/` stays where the developer put it)
 
