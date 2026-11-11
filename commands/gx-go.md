@@ -1,4 +1,5 @@
 ---
+name: gx-go
 description: Run a code-changing task end-to-end — branch, build, test, PR, squash-merge — and record it as a timestamped Markdown change file under .gainwix/<component>/changes/ that renders on GitHub. Run alone, it takes the next item from the one wave that can start and moves it to in-progress on pick-up and to completed on merge; under /gx-sing or /gx-ping the driver names the item and owns every move. Mandatory for ALL code changes.
 disable-model-invocation: true
 ---

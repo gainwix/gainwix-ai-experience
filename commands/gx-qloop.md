@@ -1,4 +1,5 @@
 ---
+name: gx-qloop
 description: QA convergence loop — /gx-qa, then /gx-qbugs on failures, then /gx-ping to fix them, repeating until the suite is green.
 disable-model-invocation: true
 ---

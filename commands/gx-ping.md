@@ -1,4 +1,5 @@
 ---
+name: gx-ping
 description: Parallel driver — take the ONE wave that can start now, build its items at the same time, merge them one at a time, then stop. The next wave waits for this one to have merged.
 disable-model-invocation: true
 ---

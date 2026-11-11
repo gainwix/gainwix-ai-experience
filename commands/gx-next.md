@@ -1,4 +1,5 @@
 ---
+name: gx-next
 description: Take the first raw idea from the inbox, plan it into a detailed executable task, and add it to .gainwix/<component>/backlog.html with its dependencies, priority and size — so the waves recompute around it. One item per invocation, top-down.
 disable-model-invocation: true
 ---

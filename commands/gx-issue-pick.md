@@ -1,4 +1,5 @@
 ---
+name: gx-issue-pick
 description: Dequeue the oldest `queued` GitHub issues into .gainwix/<component>/inbox.md (FIFO), removing the `queued` label.
 disable-model-invocation: true
 ---

@@ -1,4 +1,5 @@
 ---
+name: gx-issue-add
 description: Create a GitHub issue from a prompt and tag it `queued`. Touches GitHub only — nothing under .gainwix/ and nothing in the repo.
 disable-model-invocation: true
 ---

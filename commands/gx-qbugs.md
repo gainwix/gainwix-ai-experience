@@ -1,4 +1,5 @@
 ---
+name: gx-qbugs
 description: Triage the latest /gx-qa run's failures into bug issues and fix ideas in .gainwix/<component>/inbox.md (idempotent via a [QA:<slug>] marker).
 disable-model-invocation: true
 ---

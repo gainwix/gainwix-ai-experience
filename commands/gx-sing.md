@@ -1,4 +1,5 @@
 ---
+name: gx-sing
 description: Sequential driver — take the ONE wave that can start now and work its items one at a time, each merged before the next begins, then stop. The next wave waits for this one to have merged.
 disable-model-invocation: true
 ---

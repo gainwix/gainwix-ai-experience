@@ -1,4 +1,5 @@
 ---
+name: gx-issue-list
 description: List the `queued`-labeled GitHub issues, oldest-first (FIFO by createdAt). Read-only — shows ONLY issues carrying the `queued` label (the category /gx-issue-pick + /gx-issue-add use), never all of GitHub. Defaults to OPEN issues; `/gx-issue-list all` includes closed; `/gx-issue-list <N>` caps to the oldest N. Makes no changes (no labels, no files, no commit). Operational/read-only; only BUILDING this recipe is a /gx-go change.
 disable-model-invocation: true
 ---

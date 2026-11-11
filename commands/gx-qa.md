@@ -1,4 +1,5 @@
 ---
+name: gx-qa
 description: End-to-end QA — boot your stack (frontend + backend) against an isolated, freshly seeded test database (per qa/QA.md's Environment/setup section), run every workflow in qa/QA.md through Playwright/chromium, capture per-step screenshots, emit a self-contained paginated qa/RUN-REPORT-<ts>.html with linked screenshots + highlighted located errors, prepend qa/RUN-LOG.md, then triage failures (root-cause WHERE — frontend vs backend). OPERATIONAL: commits the qa/ artifacts to develop; NOT a /gx-go change (no changes/*.md, no CHANGELOG entry). Aborts cleanly when qa/QA.md has no workflows.
 disable-model-invocation: true
 ---
