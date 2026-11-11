@@ -1,8 +1,16 @@
 ---
 name: gx-go
-description: Run a code-changing task end-to-end under the BACKLOG.md autonomy preamble and record it as a timestamped Markdown change file under changes/ that renders on GitHub (task, decision/action timeline, GitHub issue + PR links, session info, Tokens-or-Tools, elapsed). Appends a link to CHANGELOG.md. Task source is the top BACKLOG.md item, or — in interactive mode — the prompt itself (no BACKLOG.md edit). Mandatory for ALL code changes. Never touches ACTION-ITEMS.md.
+description: Run a code-changing task end-to-end — branch, build, test, PR, squash-merge — and record it as a timestamped Markdown change file under .gainwix/<component>/changes/ that renders on GitHub. Run alone, it takes the next item from the one wave that can start and moves it to in-progress on pick-up and to completed on merge; under /gx-sing or /gx-ping the driver names the item and owns every move. Mandatory for ALL code changes.
 disable-model-invocation: true
 ---
+
+> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
+> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
+> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
+> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
+> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
+> old root paths in the prose below are being rewritten command by command; where
+> one disagrees with that document, **that document wins.**
 
 # /gx-go — run a task under the autonomy preamble and record it as a Markdown change file
 
@@ -10,7 +18,7 @@ disable-model-invocation: true
 push → issue → PR → squash-merge → cleanup) and writes a **Markdown change
 record** under `changes/`. Markdown is used (not HTML) so the record **renders
 inline on GitHub**. The change file is the single source of truth for "what this
-run did" — `/gx-go` **never reads, writes, or clears `ACTION-ITEMS.md`** (that file
+run did" — `/gx-go` **never reads, writes, or clears `.gainwix/<component>/inbox.md`** (that file
 is retired from this workflow).
 
 **This workflow is mandatory for every code change in this repo** — whether you
@@ -20,56 +28,160 @@ shortcut path that skips them (see CLAUDE.md).
 
 **Exception — queuing work is NOT a code change.** If an interactive prompt
 simply asks to **add to the backlog / queue** — appending a raw idea to
-`ACTION-ITEMS.md` (below the `<!-- Add action items below this line -->` marker)
-or a task to `BACKLOG.md` — that is a lightweight queue edit, not a code change.
+`.gainwix/<component>/inbox.md` (below the `<!-- Add action items below this line -->` marker)
+or a task to the backlog (`.gainwix/<component>/backlog.html`) — that is a lightweight queue edit, not a code change.
 Just edit the queue file directly (commit + push it to `develop` like a queue
 mutation if appropriate). Do **NOT** spin up this `/gx-go` workflow for it: no
-worktree/PR ceremony, **no `changes/*.md` record, and no `CHANGELOG.md` entry**.
+worktree/PR ceremony, **no `.gainwix/<component>/changes/*.md` record, and no `.gainwix/<component>/CHANGELOG.md` entry**.
 The change record documents *executed* work, never merely *queued* work.
-(`/gx-next` is the command that turns a queued `ACTION-ITEMS.md` idea into a
-`BACKLOG.md` task; it likewise produces no change record.)
+(`/gx-next` is the command that turns a queued `.gainwix/<component>/inbox.md` idea into a
+the backlog (`.gainwix/<component>/backlog.html`) task; it likewise produces no change record.)
 
 ## Step 0 — Read the autonomy preamble, then pick the task
 
-**0a. Read the autonomy preamble (ALWAYS — both modes).** Read the
-`### Autonomy preamble (read first)` section in `BACKLOG.md` (it lives in the
-instructions region, above `## Backlog Items`). Treat it as **binding** for this
-run: proceed without asking for approval, make reasonable assumptions, and run
-the full branch → generate → test → fix → commit → push → issue → PR →
-squash-merge → cleanup loop autonomously. Do this before any other step.
+**0a. Read the autonomy preamble (ALWAYS — both modes).** Read
+`.gainwix/autonomy.md`. Treat it as **binding** for this run: proceed without
+asking for approval, make reasonable assumptions, and run the full branch →
+generate → test → fix → commit → push → issue → PR → squash-merge → cleanup loop
+autonomously. Do this before anything else.
 
-**0b. Determine the task + the mode:**
+**0b. Resolve the component.**
 
-- **Backlog mode** — `/gx-go` with no inline task. The task is the **first line
-  starting with `- ` (dash + space)** under the `## Backlog Items` H2 in
-  `BACKLOG.md` (it may be nested under an `### ` sub-heading). Capture its full
-  body verbatim (including hanging-indent continuation lines). If there are
-  **no** `- ` items under `## Backlog Items`, print "Backlog is empty — nothing
-  to execute." and STOP (do not create a change file). **Remove that item from
-  `BACKLOG.md` as part of the task's own feature branch / PR** (alongside the
-  implementation, the `changes/*.md` record, and the `CHANGELOG.md` link) — so
-  when the PR squash-merges, the task is implemented AND dequeued atomically, and
-  a follow-up `/gx-go` (or `/gx-sing` loop) reads the next task, not this one again.
+```bash
+GX="node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs"
+$GX components
+```
+
+One component and it is chosen for you. ⚠ **With more than one, this call just
+lists them and exits 0** — the refusal comes on the next `$GX` call. Read the
+list: more than one name means ask which, then `$GX use --component <name>`. ⛔ **Never guess between
+components:** a task written into the wrong backlog is silent and expensive to
+unpick.
+
+⛔ **Then bind the name, because later steps interpolate it:**
+
+```bash
+COMPONENT=<the resolved component>
+```
+
+⚠ **Without this, `RECORDS=".gainwix/${COMPONENT}/changes"` in Step 1 expands to
+`.gainwix//changes`** and the run's whole record lands somewhere nobody looks.
+
+**0c. Determine the task + the mode:**
+
+- **Backlog mode** — `/gx-go` with no inline task. Ask the tool what can start:
+
+  ```bash
+  $GX ready
+  ```
+
+  ⭐ **It returns ONE wave**: every item whose dependencies have **merged**, and
+  nothing from the next wave. Take the **first** — they are already ordered by
+  priority, then serial. If `count` is `0`, say *"nothing can start right now"*,
+  name what is in progress and what it is waiting on, and **STOP** — do not
+  create a change file.
+
+  Then mark it picked up, before any code changes:
+
+  ```bash
+  $GX move --id <SERIAL> --to in-progress [--issue <issue-url>]
+  ```
+
+  ⚠ **`--issue` only if the item already tracks one.** This move happens before
+  any code changes; the issue this run opens does not exist until Step 5. The PR
+  link is written later, on the `completed` move.
+
+  ⛔ **That is the dequeue, and it happens now rather than at merge time.** An
+  item in `in-progress.html` is *already taken*, so a parallel session will not
+  pick up the same work — but it **unblocks nothing**. Only merging does that.
+
+  When the PR squash-merges, close the loop:
+
+  ```bash
+  $GX move --id <SERIAL> --to completed --pr-link <pr-url>
+  ```
+
+  ⚠ **If the run fails or is abandoned, put it back:** `$GX move --id <SERIAL>
+  --to backlog`. An item stranded in `in-progress.html` blocks everything behind
+  it and nothing will say so.
+
+- **Driven mode** — a driver (`/gx-sing`, `/gx-ping`) handed you **one item's
+  serial, title, detail, spec, deps and lane**, taken from its captured
+  `$GX ready`.
+  **That item is the task; do not read the backlog and do not choose.**
+
+  ⛔ **Make no `$GX move` at all in this mode** — not `in-progress`, not
+  `completed`, not the put-back. The driver owns every move; a second one exits
+  non-zero with *"already in \<stage\>"*, which a driver can read as a hard
+  failure and abort a run it had already handled.
+
+  ⛔ **Never fall back to backlog mode here.** The driver captured its wave
+  before moving anything, and `$GX ready` mid-run no longer describes it: under
+  `/gx-ping` the whole wave is already `in-progress`, so what comes back is **the
+  next wave**, whose foundations have not merged. Under `/gx-sing` you would take
+  an item out of the driver's order. Either way you build the wrong thing.
+
+  ⛔ **You do not merge.** Ignore step 7 of Step 2. Open the PR and stop — the
+  driver merges, serially, once the work it dispatched alongside yours has
+  finished. That serialisation is the only thing keeping concurrent PRs from
+  racing one trunk.
+
+  ⛔ **Skip Step 4 entirely** — the finalize pass and the `CHANGELOG.md` link.
+  **That file is shared**, and two teams appending to it on two branches conflict
+  on every parallel group. The driver writes it once, after it merges you. Do
+  still write your change record **append-as-you-go** during the run: if you
+  crash, that partial file is the only account of what happened.
+
+  ⛔ **Skip the kanban sub-issue edit in Step 2** for the same reason: appending
+  `- [ ] #<new>` to the tracked issue's body is a read-modify-write of one GitHub
+  issue that two teams can race. **Report your new issue's number to the driver
+  and let it make that edit** — it is not optional, it is how `/gx-qa` later sees
+  the subordinate and advances the card. Opening **your own** issue is still
+  yours.
+
+  ⚠ **The driver must give you two things beyond the item**, because
+  `${CLAUDE_PLUGIN_ROOT}` is a shell expansion that does not survive into a prompt
+  and every command block below uses it: **the resolved `$GX` command line** and
+  **the component name**. Without them Step 0b cannot bind `COMPONENT`, and your
+  whole record lands in `.gainwix//changes`. If they were not given, **ask before
+  building** — do not guess.
+
+  **Return to the driver:** the branch name, the issue URL, the PR URL, and the
+  path of your change record. It cannot get them any other way once you are
+  done.
+
+⚠ **Backlog mode is for a person running `/gx-go` on its own.** The drivers use
+driven mode above. A driver that let `/gx-go` choose would re-pick an item that had just
+failed and gone back to the backlog, because `$GX ready` offers it again straight
+away.
+
 - **Interactive mode** — a plain conversational prompt requesting a code change,
-  OR `/gx-go <task>` with an inline task. The task is that prompt / description.
-  **Do NOT read the `## Backlog Items` list and do NOT edit `BACKLOG.md`'s
-  items** (you still read its autonomy preamble in 0a). Everything else — the
-  change file, the build/PR loop, and the `CHANGELOG.md` link — is identical to
-  backlog mode.
+  OR `/gx-go <task>` with an inline task. The task is that prompt. **Do not read
+  the backlog and do not move anything** (you still read `.gainwix/autonomy.md`
+  in 0a). Everything else — the change record and the build/PR loop — is
+  identical.
 
-Never read or modify `ACTION-ITEMS.md` in either mode.
+⛔ **Never hand-edit any file under `.gainwix/`.** The tool recomputes the whole
+dependency order on every write, so an edit made by hand is either overwritten or
+kept beside an order that no longer matches it.
+→ `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`
 
 ## Step 1 — Open the change file
 
 Capture timing + identity up front (shell, so it's real wall-clock):
 
 ```bash
-mkdir -p changes
+RECORDS=".gainwix/${COMPONENT}/changes"
+mkdir -p "$RECORDS"
 TS=$(date '+%Y-%m-%d-%H-%M-%S')          # filename stamp
 START_HUMAN=$(date '+%Y-%m-%d %H:%M:%S %Z')
 START_EPOCH=$(date +%s)
-CHANGE_FILE="changes/${TS}-change.md"
+CHANGE_FILE="${RECORDS}/${TS}-change.md"
 ```
+
+⚠ **Records are per component** — `.gainwix/<component>/changes/`, indexed by
+`.gainwix/<component>/CHANGELOG.md`. A repo that builds four things keeps four
+histories, not one mixed pile.
 
 Create `changes/<TS>-change.md` from the **skeleton in Step 5** with the
 top-of-file fields filled in:
@@ -101,7 +213,7 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
 
 1. From a fresh branch off `origin/develop`, implement the task.
 2. Run the project's test suite where appropriate (the exact command is declared
-   in `BACKLOG.md`'s autonomy preamble — e.g. `npm test`, `bin/rails test`,
+   in `.gainwix/autonomy.md` — e.g. `npm test`, `bin/rails test`,
    `pytest`, `go test ./...`, `make check`), only when the change touches code the
    suite covers. If your project regenerates a coverage report as part of the test
    run, **stage and commit it as part of this task's PR** so the committed report
@@ -110,6 +222,10 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
    before shipping.
 3. Commit with a descriptive message ending in the standard `Co-Authored-By`
    footer (include any refreshed coverage report when the suite ran).
+   ⛔ **Stage `.gainwix/<component>/changes/<ts>-change.md` in this commit too.**
+   In driven mode the driver writes the merge links into that file **by path**
+   after merging — which only works if the file reached `develop`. Left
+   uncommitted in a worktree, it dies with the worktree.
 4. Push the branch.
 5. Open a GH issue describing the change (best-effort — if blocked, note it in
    the timeline and continue). **`/gx-go` ALWAYS opens its OWN new issue for the
@@ -117,7 +233,8 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
    tracked issue as the change's issue.
 6. Open a PR against `develop` (reference the **new** issue from step 5 with
    `Closes #<new>` when one was created).
-7. Squash-merge the PR (`--squash --delete-branch`) once green.
+7. Squash-merge the PR (`--squash --delete-branch`) once green. ⛔ **Not in
+   driven mode** — there the driver merges.
 
 A task may produce **more than one PR** — record every issue and PR.
 
@@ -138,10 +255,11 @@ PR `Closes #<new>`):
     `- [ ] #<new>` line under a `## Sub-issues (opened by /gx-go)` heading (create the
     heading if absent), then write it back:
     ```bash
-    gh issue view <N> --json body -q .body > /tmp/kanban-body.md
+    KB=$(mktemp -t kanban-body)   # ⛔ never a fixed path: two runs at once collide
+    gh issue view <N> --json body -q .body > "$KB"
     # append "- [ ] #<new>" under a "## Sub-issues (opened by /gx-go)" heading
     # (add the heading first if the body has none), then:
-    gh issue edit <N> --body-file /tmp/kanban-body.md
+    gh issue edit <N> --body-file "$KB"
     ```
   - (optional) `gh issue comment <N> --body "Subordinate issue #<new> opened by /gx-go for this change."`
 - **Step 6's PR `Closes #<new>`** (the subordinate) — **NEVER `Closes #<N>`**. Leave
@@ -181,7 +299,7 @@ Patch the top of the file: set **Ended** = `END_HUMAN`, **Elapsed** =
 human-readable duration, and finalize the Tokens/Tools row. Make sure the
 **Links** section lists every GitHub issue and PR as Markdown links.
 
-Then **append a link to `CHANGELOG.md`** (create it if missing) — one Markdown
+Then **append a link to `.gainwix/<component>/CHANGELOG.md`** (create it if missing) — one Markdown
 list item, newest at the top of the list, pointing at the new file:
 
 ```
@@ -197,7 +315,7 @@ Timeline list and the Links lists as you go.
 ```markdown
 # {{TASK_TITLE}}
 
-_{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no BACKLOG.md edit)." — omit this line if there's nothing to note}}_
+_{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no backlog edit)." — omit this line if there's nothing to note}}_
 
 | Field | Value |
 |-------|-------|
@@ -243,19 +361,19 @@ _{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no BACKLOG.md edit)." — omit 
 Print a short roll-up to the operator: the task, the change file path
 (`changes/<TS>-change.md`), the issue + PR URLs, merge SHA(s), test counts,
 and the elapsed time. Mention that the run was recorded to the change file
-(which renders on GitHub) and linked from `CHANGELOG.md`.
+(which renders on GitHub) and linked from `.gainwix/<component>/CHANGELOG.md`.
 
 ## Notes
 
 - **Applies to ALL code changes — but NOT to queuing work.** Interactive prompts
   that don't type `/gx-go` still follow this workflow (autonomy preamble + worktree
-  + one PR + change file + CHANGELOG link) — they just skip the `BACKLOG.md` item
+  + one PR + change file + CHANGELOG link) — they just skip the the backlog (`.gainwix/<component>/backlog.html`) item
   read/edit. **However**, a prompt that *only* adds to the backlog/queue
-  (appending to `ACTION-ITEMS.md` or `BACKLOG.md`) is NOT a code change: edit the
+  (appending to `.gainwix/<component>/inbox.md` or the backlog (`.gainwix/<component>/backlog.html`)) is NOT a code change: edit the
   queue file directly with NO change file and NO CHANGELOG entry (see the
   Exception near the top). This is also stated in CLAUDE.md so it holds even when
   `/gx-go` isn't invoked.
-- **ACTION-ITEMS.md is no longer part of `/gx-go`.** Do not read it, write it, or
+- **.gainwix/<component>/inbox.md is no longer part of `/gx-go`.** Do not read it, write it, or
   clear it. (`/gx-next` and `/gx-sing` may still reference it; that's out of scope for
   `/gx-go`.)
 - **Never close the tracked kanban issue from `/gx-go`'s PR.** When the task tracks a
@@ -268,10 +386,10 @@ and the elapsed time. Mention that the run was recorded to the change file
   always).
 - The change file is **append-as-you-go**, not written once at the end — so a
   crashed/interrupted run still leaves a partial, useful record.
-- Removing the executed item from `BACKLOG.md` (so it isn't re-run) happens in
+- Removing the executed item from the backlog (`.gainwix/<component>/backlog.html`) (so it isn't re-run) happens in
   **backlog mode only**. In **interactive mode** the task came from the prompt,
-  so leave `BACKLOG.md`'s item list untouched (you still read its autonomy
-  preamble). Never touch `ACTION-ITEMS.md` in either mode.
+  so leave the backlog's item list (`.gainwix/<component>/backlog.html`) untouched (you still read the autonomy
+  preamble). Never touch `.gainwix/<component>/inbox.md` in either mode.
 - **Markdown, not HTML** — change files are plain GitHub-Flavored Markdown so
   they render inline on GitHub. Don't use raw HTML/CSS; keep it portable.
 - **Coverage report travels with the change.** If running the test suite

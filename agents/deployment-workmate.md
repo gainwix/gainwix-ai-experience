@@ -183,22 +183,43 @@ Once a project is resolved, **set it so nothing downstream complains about a mis
 
 Detect the stack (read files: language, framework, runtime, build method, port, env vars) for context, then scaffold the dev-workflow files.
 
-### Scaffold the dev workflow (idempotent — never overwrite)
-The `/gx-*` dev-workflow commands (`/gx-go`, `/gx-next`, `/gx-sing`, `/gx-ping`, `/gx-qa`, …) expect a small set of repo files to exist. As part of `/gx-init`, **create the ones that are missing** by copying from the bundled scaffold at `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/`. **Only create a file if it doesn't already exist — never overwrite or modify an existing one** (the developer's real `BACKLOG.md`/`ABOUT.md`/etc. always wins). Use Bash:
+### Scaffold the dev workflow (ask first, then make room under `.gainwix/`)
+
+⛔ **The mistake this step used to make.** It ran `[ -e "$f" ] || cp …` for `ABOUT.md`, `ACTION-ITEMS.md` and `BACKLOG.md` at the repo root. That asks *"does a file of this exact name exist?"* — **not** *"do you already have somewhere for this?"* It met a repo with `about/` and `active/` **directories**, passed every check, and offered to scaffold on top of a structure the developer had built on purpose. ⭐ **Ask the second question. Always.**
+
+**1 · Look, and ask.**
 
 ```bash
-SCAFFOLD="${CLAUDE_PLUGIN_ROOT}/templates/scaffold"
-for f in ABOUT.md ACTION-ITEMS.md BACKLOG.md CHANGELOG.md; do
-  [ -e "$f" ] || { cp "$SCAFFOLD/$f" "$f"; echo "created $f"; }
-done
-mkdir -p changes && [ -e changes/.gitkeep ] || { : > changes/.gitkeep; echo "created changes/"; }
-mkdir -p qa
-[ -e qa/QA.md ]      || { cp "$SCAFFOLD/qa/QA.md" qa/QA.md;            echo "created qa/QA.md"; }
-[ -e qa/.gitignore ] || { cp "$SCAFFOLD/qa/.gitignore" qa/.gitignore; echo "created qa/.gitignore"; }
-[ -e qa/runner ]     || { cp -R "$SCAFFOLD/qa/runner" qa/runner;      echo "created qa/runner/"; }
+node "${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs" detect
 ```
 
-This sets up: `ABOUT.md` (project overview to fill in), `ACTION-ITEMS.md` (raw-idea inbox with the `<!-- Add action items below this line -->` marker), `BACKLOG.md` (planned queue with the `### Autonomy preamble` + `## Backlog Items` that `/gx-go` reads), `CHANGELOG.md` (the `/gx-go` change-record index), the `changes/` directory, `qa/QA.md` (the `/gx-qa` regression suite), and `qa/runner/` (the self-contained Playwright runner `/gx-qa` drives). Tell the developer plainly what you created vs. what already existed, that `qa/QA.md` is a template to fill in, and that **`/gx-about` will fill in `ABOUT.md` and seed `ACTION-ITEMS.md`** for them next. Flag the one-time `/gx-qa` prerequisite — before the first run, `cd qa/runner && npm install && npx playwright install chromium`. Note the trunk-branch convention — the dev commands use a `develop` trunk; confirm the repo has one and tell them to **create a `develop` branch if it doesn't** (`git branch develop`). The workflow standardizes on `develop` and does not support a different trunk name. Don't deploy and don't run any dev-workflow command — just lay down the files. Skip this scaffolding only if the developer says they don't want the dev workflow.
+`components` lists directories that build something. **`alreadyHas` lists places they already keep specs, a backlog or an inbox.** If `alreadyHas` is not empty, show it and ask what to do — read those in, sit alongside them, or leave them alone. Never create anything over the top of it.
+
+**2 · Agree the components and their serial prefixes.** More than one component means asking which keep their own backlog. One component means saying so and moving on — a question with a single answer is a tax. A prefix (2–4 letters, `AB`, `API`, `WEB`) stamps every item id; it is **permanent and never reused**.
+
+**3 · Make room, per component.**
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs" create --component <name> --prefix <PREFIX>
+```
+
+Which writes, and never overwrites:
+
+```
+.gainwix/
+  README.md                    why this directory is not hand-edited
+  <component>/
+    backlog.html               everything still to do, in dependency order
+    in-progress.html           only what is being worked on now — transient
+    completed.html             what landed, with the PR that landed it
+    changes/  CHANGELOG.md     the record of executed work
+```
+
+⛔ **Nothing goes in the repo root**, and **`.gainwix/deploy-context.json` is never moved or nested** — the production gate reads that exact path on every command.
+
+**4 · QA, only if they want it.** `qa/QA.md` and `qa/runner/` from `${CLAUDE_PLUGIN_ROOT}/templates/scaffold/qa/`, created only when missing. Flag the one-time `cd qa/runner && npm install && npx playwright install chromium`.
+
+**5 · Say what happened.** What you created, what already existed, that the `.gainwix/` files are tool-managed and should not be hand-edited, and that **`/gx-about` fills in the project overview next**. Note the trunk convention — the dev commands use `develop`; tell them to run `git branch develop` if the repo has no such branch. Don't deploy and don't run any dev-workflow command — just lay down the files. Skip this step entirely if the developer says they don't want the dev workflow.
 
 ### Then
 Note anything else worth flagging for a clean deploy (e.g. a missing Dockerfile — mention buildpacks can handle it at deploy time, but don't build it now). Do **not** deploy and do **not** configure GCP — `/gx-gcp-deploy` handles all of that. End with a one-line "your repo's scaffolded — run `/gx-about` next to fill in ABOUT.md + seed your backlog, then `/gx-next`/`/gx-go` to build (or `/gx-gcp-deploy` when you're ready to ship)."

@@ -4,6 +4,14 @@ description: Repository-hygiene sweep — runs in two phases. Phase 0 cleans up 
 disable-model-invocation: true
 ---
 
+> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
+> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
+> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
+> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
+> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
+> old root paths in the prose below are being rewritten command by command; where
+> one disagrees with that document, **that document wins.**
+
 # /gx-sweep — clean up old QA reports, then prune merged branches
 
 `/gx-sweep` is a repository-hygiene command. It runs in two phases:
@@ -21,8 +29,8 @@ disable-model-invocation: true
    (a worktree still held the local branch and the delete step aborted), or when
    branches were merged from another machine/session.
 
-`/gx-sweep` is **operational, not a `/gx-go` change**: it writes **no** `changes/*.md`
-record and **no** `CHANGELOG.md` entry, and does **not** run the `/gx-go` workflow.
+`/gx-sweep` is **operational, not a `/gx-go` change**: it writes **no** `.gainwix/<component>/changes/*.md`
+record and **no** `.gainwix/<component>/CHANGELOG.md` entry, and does **not** run the `/gx-go` workflow.
 Phase 0 makes ONE small commit (it touches tracked report files + `RUN-LOG.md` —
 same spirit as `/gx-qa` / `/gx-qbugs`, which commit their operational artifacts
 directly to `develop`); Phase 1 makes no commit at all (it only mutates remote +

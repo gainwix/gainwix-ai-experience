@@ -57,14 +57,14 @@ Authentication uses your own credentials under least privilege — nothing is ha
 /gx-about           # interview to fill in ABOUT.md, then seed ACTION-ITEMS.md from it
 /gx-next            # plan the top idea into a real, executable task
 /gx-go              # build one task end-to-end → PR → merge, with a change record
-/gx-sing            # run the whole list, one task at a time
-/gx-ping            # run independent tasks in parallel
+/gx-sing            # run one wave, one task at a time, then stop
+/gx-ping            # run one wave, its tasks at the same time, then stop
 /gx-qa              # end-to-end QA run with a screenshotted report
 /gx-gcp-deploy      # ship it to Google Cloud Run (one of the commands; /gx-deploy is an alias)
 /gx-help <command>  # deep dive on any command
 ```
 
-A typical loop: `/gx-init` → `/gx-about` → `/gx-next` → `/gx-go` (or `/gx-sing` to run the whole list). Deploy with `/gx-gcp-deploy` whenever you're ready.
+A typical loop: `/gx-init` → `/gx-about` → `/gx-next` → `/gx-go` (or `/gx-sing` to run a whole wave). ⛔ **`/gx-sing` and `/gx-ping` run one wave and stop** — the next wave needs the last one merged, so run them again. Deploy with `/gx-gcp-deploy` whenever you're ready.
 
 ### What the deploy command (`/gx-gcp-deploy`) does
 
@@ -97,14 +97,14 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | `/gx-init` | ✅ | Set up the repo: detect the stack + scaffold the dev-workflow files. |
 | `/gx-about` | ✅ | Fill in `ABOUT.md` by interview, then seed `ACTION-ITEMS.md` from it. Run after `/gx-init`. |
 
-**Build & ship the work** (ported from the AptonWorks dev pipeline — assume a `develop` trunk + the `ACTION-ITEMS.md`/`BACKLOG.md`/`changes/`/`qa/` conventions)
+**Build & ship the work** (ported from the AptonWorks dev pipeline — assume a `develop` trunk; the queue lives under `.gainwix/<component>/`, `qa/` stays where the developer put it)
 
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
 | `/gx-next` | ✅ | Plan the top `ACTION-ITEMS.md` idea into a `BACKLOG.md` task. |
 | `/gx-go` | ✅ | Run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record. |
-| `/gx-sing` | ✅ | Serial loop: plan one + ship one until both queues drain. |
-| `/gx-ping` | ✅ | Parallel loop: conflict-free batch (worktree per item), serial merges. |
+| `/gx-sing` | ✅ | One wave, worked one item at a time, each merged before the next — then stop. |
+| `/gx-ping` | ✅ | One wave, its items built at the same time (worktree each), merged serially — then stop. |
 | `/gx-qa` | ✅ | End-to-end browser + API QA → screenshotted report. |
 | `/gx-qbugs` | ✅ | File the latest QA run's failures as bug issues + fix tasks. |
 | `/gx-qloop` | ✅ | qa → qbugs → ping until the suite is green. |
