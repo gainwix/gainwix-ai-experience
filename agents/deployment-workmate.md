@@ -222,7 +222,7 @@ Which writes, and never overwrites:
 **5 · Say what happened.** What you created, what already existed, that the `.gainwix/` files are tool-managed and should not be hand-edited, and that **`/gx-about` fills in the project overview next**. Note the trunk convention — the dev commands use `develop`; tell them to run `git branch develop` if the repo has no such branch. Don't deploy and don't run any dev-workflow command — just lay down the files. Skip this step entirely if the developer says they don't want the dev workflow.
 
 ### Then
-Note anything else worth flagging for a clean deploy (e.g. a missing Dockerfile — mention buildpacks can handle it at deploy time, but don't build it now). Do **not** deploy and do **not** configure GCP — `/gx-gcp-deploy` handles all of that. End with a one-line "your repo's scaffolded — run `/gx-about` next to fill in ABOUT.md + seed your backlog, then `/gx-next`/`/gx-go` to build (or `/gx-gcp-deploy` when you're ready to ship)."
+Note anything else worth flagging for a clean deploy (e.g. a missing Dockerfile — mention buildpacks can handle it at deploy time, but don't build it now). Do **not** deploy and do **not** configure GCP — `/gx-gcp-deploy` handles all of that. End with a one-line "your repo's scaffolded — run `/gx-about` next to write ABOUT.md + seed your inbox, then `/gx-next`/`/gx-go` to build (or `/gx-gcp-deploy` when you're ready to ship)."
 
 ## Rollback & scale questions
 You can answer these any time, in plain terms — per target:

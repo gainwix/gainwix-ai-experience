@@ -23,12 +23,20 @@ is exactly why moving them was expensive.*
     CHANGELOG.md               the index of those records
 ```
 
-⛔ **Nothing goes in the repo root.** Not `BACKLOG.md`, not `ACTION-ITEMS.md`,
+⛔ **No tool state goes in the repo root.** Not `BACKLOG.md`, not `ACTION-ITEMS.md`,
 not `changes/`. A repo's root belongs to the person who owns the repo.
 
-⚠ **`qa/` is the exception, and deliberately.** The QA suite is the developer's
-own file, hand-written by design — the opposite of the tool-managed files here.
-It stays at `qa/QA.md` where they put it.
+⚠ **Two files live outside `.gainwix/`, deliberately: `ABOUT.md` and `qa/QA.md`.**
+Both are the developer's own, hand-written by design — the opposite of the
+tool-managed files here.
+
+```
+ABOUT.md                       the product overview — /gx-about creates it when missing
+qa/QA.md                       the QA suite — stays where the developer put it
+```
+
+`/gx-about` writes `ABOUT.md` from `templates/scaffold/ABOUT.md` the first time
+and never overwrites one; `/gx-init` does not create it.
 
 ⛔ **`deploy-context.json` is never moved or nested.** `hooks/gate-production.js`
 reads `<cwd>/.gainwix/deploy-context.json` on every command; anywhere else and

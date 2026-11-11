@@ -1,11 +1,11 @@
 # <Project name> — Product Overview
 
-> Scaffolded by `/gx-init`. **Run `/gx-about` to fill this in by interview** (it drafts
-> from a repo scan and asks you the rest), or replace every `<placeholder>` by hand —
-> either way, delete the guidance notes when done. This file is the **single source of
-> truth** for what the product is and why it exists — the dev-workflow commands
-> read it for context, and the closing prompt turns it into the seed for your
-> backlog. Keep the section structure; fill it in.
+> The template `/gx-about` writes `ABOUT.md` from. **Run `/gx-about` to fill it in by
+> interview** (it drafts from a repo scan and asks you the rest), or copy it to the repo
+> root and replace every `<placeholder>` by hand — either way, delete the guidance notes
+> when done. This file is the **single source of truth** for what the product is and
+> why it exists, and the closing prompt turns it into the first ideas in your inbox.
+> Keep the section structure; fill it in.
 
 ## Abstract
 

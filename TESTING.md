@@ -156,10 +156,10 @@ From a **separate** application repository:
 2. `/plugin install gainwix@gainwix-workmates`
 3. `/gx-init` — confirm it sets up `.gainwix/` and does **not** touch
    GCP (no sign-in/project/region prompt).
-4. `/gx-about` — confirm it interviews you to fill in `ABOUT.md`, gates on your
-   approval, then seeds `.gainwix/<component>/inbox.md` and gates again. No code,
-   no GCP, no deploy. ⚠ **Currently blocked:** `/gx-about` stops unless `ABOUT.md`
-   already exists, and `/gx-init` no longer creates it.
+4. `/gx-about` — confirm it **creates `ABOUT.md` at the repo root** (the repo
+   has none yet; it must not send you back to `/gx-init`), interviews you to fill
+   it in, gates on your approval, then seeds `.gainwix/<component>/inbox.md` and
+   gates again. No code, no GCP, no deploy.
 5. `/gx-sim` — confirm it resolves GCP access read-only, prints a plan, and applies
    nothing.
 6. `/gx-gcp-deploy` — confirm it resolves GCP access (sign-in + project + region)
