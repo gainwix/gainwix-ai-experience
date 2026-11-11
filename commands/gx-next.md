@@ -1,4 +1,5 @@
 ---
+name: gx-next
 description: Read the first raw action item (leading hyphen) below the "<!-- Add action items below this line -->" marker in ACTION-ITEMS.md, plan it into a detailed executable task, append that task under "## Backlog Items" in BACKLOG.md, and remove the consumed item from ACTION-ITEMS.md. One item per invocation, top-down. Commits + pushes both files to develop.
 disable-model-invocation: true
 ---

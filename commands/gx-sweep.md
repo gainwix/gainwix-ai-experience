@@ -1,4 +1,5 @@
 ---
+name: gx-sweep
 description: Repository-hygiene sweep — runs in two phases. Phase 0 cleans up old local QA reports (`qa/RUN-REPORT-<ts>.{html,json,/}` + their `RUN-LOG.md` entries) so the local checkout doesn't accumulate stale runs: any run older than the latest is removed, and the latest is removed too if it had ZERO failures (kept only if it still has actionable bugs). Phase 1 prunes merged branches — delete every REMOTE branch whose PR is merged (excluding protected `main`/`develop`/`master` and any branch still with an OPEN PR), then prune the matching LOCAL branches + their worktrees and stale remote-tracking refs. Operational, not a code change (no `changes/*.md`, no `CHANGELOG.md` entry, no `/gx-go` workflow), but the QA cleanup phase IS a small commit (it touches tracked report files + `RUN-LOG.md` — same spirit as `/gx-qa` / `/gx-qbugs` operational commits).
 disable-model-invocation: true
 ---

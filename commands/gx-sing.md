@@ -1,4 +1,5 @@
 ---
+name: gx-sing
 description: Sequential Interactive Next and Go — take the next item from the top, work it end-to-end, then come back for more. Each iteration plans the top ACTION-ITEMS.md raw item into BACKLOG.md (/gx-next) then executes the top BACKLOG.md task end-to-end (/gx-go), recording a changes/*.md change file. Strictly serial; auto-loops until ACTION-ITEMS.md (below the marker) and BACKLOG.md (## Backlog Items) are both empty.
 disable-model-invocation: true
 ---

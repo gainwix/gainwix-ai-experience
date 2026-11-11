@@ -1,4 +1,5 @@
 ---
+name: gx-issue-add
 description: Create a GitHub issue from a prompt and tag it `queued`. Claude turns the free-text prompt into a well-formed issue (concise title + structured body), runs `gh issue create --label queued`, and reports the new issue. SCOPED to the `queued` label only (the same category /gx-issue-pick and /gx-issue-list use) — it tags every issue it files `queued` and touches nothing else: not other issues, not ACTION-ITEMS.md/BACKLOG.md, not any repo file. Operational (remote-only — one `gh issue create`); only BUILDING this recipe is a /gx-go change.
 disable-model-invocation: true
 ---
