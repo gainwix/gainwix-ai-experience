@@ -70,6 +70,18 @@ test("⛔ a serial belongs to its component — the prefixes do not collide", ()
   assert.match(gx(root, "show", "--component", "api"), /API-001/);
 });
 
+test("⛔ a serial is never re-issued once its item has left the backlog", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  gx(root, "add", "--title", "One");
+  gx(root, "move", "--id", "AB-001", "--to", "in-progress");
+  assert.match(gx(root, "add", "--title", "Two"), /AB-002/, "highest serial is in progress");
+  gx(root, "move", "--id", "AB-001", "--to", "completed");
+  gx(root, "move", "--id", "AB-002", "--to", "in-progress");
+  gx(root, "move", "--id", "AB-002", "--to", "completed");
+  assert.match(gx(root, "add", "--title", "Three"), /AB-003/, "backlog empty, all completed");
+});
+
 test("a bad component is refused rather than silently created", () => {
   const root = repo();
   gx(root, "create", "--component", "admin", "--prefix", "AB");

@@ -203,10 +203,17 @@ switch (cmd) {
 
   case "add": {
     const comp = component();
-    const { items, meta } = load(root, comp, "backlog");
+    // ⛔ The next serial is counted across EVERY stage, not just the backlog.
+    // Counting the backlog alone re-issued a serial the moment its holder moved
+    // on: AB-001 completed, the backlog was empty, the next add was handed
+    // AB-001 again and then refused it as a duplicate — so /gx-next could add
+    // nothing more to that component.
+    const stages = loadComponent(root, comp);
+    const { meta } = stages.backlog;
+    const everywhere = Object.values(stages).flatMap((s) => s.items);
     const deps = String(a.deps ?? "").trim();
     const item = {
-      id: a.id ?? nextSerial(items, meta.prefix || "GX"),
+      id: a.id ?? nextSerial(everywhere, meta.prefix || "GX"),
       title: need("title"),
       detail: a.detail ?? "",
       spec: a.spec ?? "",
@@ -219,8 +226,6 @@ switch (cmd) {
       issue: a.issue ?? "",
       prLink: a["pr-link"] ?? "",
     };
-    const stages = loadComponent(root, comp);
-    const everywhere = Object.values(stages).flatMap((s) => s.items);
     if (everywhere.some((i) => i.id === item.id)) die(`${item.id} already exists`);
     stages.backlog.items.push(item);
     saveComponent(stages);
