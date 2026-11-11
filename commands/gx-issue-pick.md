@@ -1,4 +1,5 @@
 ---
+name: gx-issue-pick
 description: Dequeue the OLDEST `queued` GitHub issues into ACTION-ITEMS.md (FIFO). Lists OPEN issues labeled `queued` oldest-first (optional cap `/gx-issue-pick <N>`), appends one raw ACTION-ITEMS task per issue (carrying the issue id + link for the `queued`→`WIP`→`DONE` kanban), and REMOVES the `queued` label from each (dequeued from the waiting queue into active work). Reads the real-time list API + jq (no search-index lag). OPERATIONAL like /gx-qbugs//gx-qa//gx-sweep: removes the label + commits the ACTION-ITEMS queue edit to develop; NOT a /gx-go change. Idempotent (a dequeued issue loses `queued`, so it's never re-picked). Stops cleanly when the queue is empty.
 disable-model-invocation: true
 ---

@@ -1,4 +1,5 @@
 ---
+name: gx-go
 description: Run a code-changing task end-to-end under the BACKLOG.md autonomy preamble and record it as a timestamped Markdown change file under changes/ that renders on GitHub (task, decision/action timeline, GitHub issue + PR links, session info, Tokens-or-Tools, elapsed). Appends a link to CHANGELOG.md. Task source is the top BACKLOG.md item, or — in interactive mode — the prompt itself (no BACKLOG.md edit). Mandatory for ALL code changes. Never touches ACTION-ITEMS.md.
 disable-model-invocation: true
 ---

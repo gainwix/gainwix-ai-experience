@@ -1,4 +1,5 @@
 ---
+name: gx-qloop
 description: QA convergence loop — runs /gx-qa → (if failures) /gx-qbugs → /gx-ping repeatedly until a /gx-qa run is all-green (zero failures), then exits. Automates the find → file → fix → re-QA cycle end-to-end under the BACKLOG.md autonomy preamble. Bounded by a max-iteration cap (default 5; override `/gx-qloop <N>`) plus NO-PROGRESS / NOTHING-TO-FIX guards so it never spins. Operational orchestration: it COMPOSES /gx-qa + /gx-qbugs + /gx-ping (each keeps its own contract); /gx-qloop itself writes no changes/*.md or CHANGELOG entry. Only BUILDING this machinery is a /gx-go change.
 disable-model-invocation: true
 ---

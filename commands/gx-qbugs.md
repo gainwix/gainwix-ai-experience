@@ -1,4 +1,5 @@
 ---
+name: gx-qbugs
 description: Triage the LATEST /gx-qa run's FAILURES into bug Issues + ACTION-ITEMS fix tasks. Read the newest qa/RUN-REPORT-<ts>.json, take only the failed workflows, GROUP them into discrete bugs (same root cause = one bug), and open ONE GitHub Issue labeled `bug` per discrete bug — each with its located WHERE (frontend vs backend), report excerpts, and ONLY that bug's screenshots (copied into a committed qa/bug-evidence/ path and embedded inline, since the full screenshot folders are gitignored). Cross-link related-but-distinct bugs. Append one ACTION-ITEMS.md fix task per bug (Closes #N). OPERATIONAL like /gx-qa//gx-sweep: creates issues + commits the bug-evidence + the ACTION-ITEMS queue edit to develop; NOT a /gx-go change. Idempotent via a [QA:<slug>] marker. Stops cleanly when there are no runs or no failures.
 disable-model-invocation: true
 ---

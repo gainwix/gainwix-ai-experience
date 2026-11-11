@@ -1,4 +1,5 @@
 ---
+name: gx-ping
 description: Parallel Interactive Next and Go loop — read ALL of ACTION-ITEMS.md, work out which items are mutually conflict-free, pick up to 5 of them, and build those in parallel (one agent team per item, each in its own git worktree) within the same session. Plan + implement run in parallel; merges are serialized (rebase on develop, re-test, squash-merge). Falls back to serial when nothing is parallel-safe. Loops until ACTION-ITEMS.md (below the marker) and BACKLOG.md (## Backlog Items) are both empty.
 disable-model-invocation: true
 ---
