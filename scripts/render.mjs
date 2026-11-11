@@ -13,7 +13,7 @@
 // the rows, so `parse.mjs` can recover the model exactly. There is a test that
 // renders, re-parses and compares.
 
-import { criticalPath, kpis, ordered } from "./graph.mjs";
+import { DAYS, kpis, ordered } from "./graph.mjs";
 
 const esc = (s) =>
   String(s ?? "")
@@ -227,16 +227,15 @@ export function render(items, meta) {
   const stage = STAGES[meta.stage] ?? STAGES.backlog;
   const list = ordered(items);
   const k = kpis(items);
-  const cp = criticalPath(items);
   const lanes = [...new Set(items.map((i) => i.lane).filter(Boolean))].sort();
-  const waves = k.waves;
+  // ⚠ Only the waves this page actually holds. Wave numbers are component-wide,
+  // so the in-progress page may hold waves 3 and 5 and nothing else — counting
+  // 0..5 drew four empty wave blocks and four filter options that match nothing.
+  const waves = [...new Set(list.map((i) => i.wave))];
 
-  const board = Array.from({ length: waves }, (_, w) => {
+  const board = waves.map((w) => {
     const inWave = list.filter((i) => i.wave === w);
-    const days = inWave.reduce(
-      (a, i) => Math.max(a, { S: 0.5, M: 1.5, L: 4 }[i.size] ?? 0),
-      0,
-    );
+    const days = inWave.reduce((a, i) => Math.max(a, DAYS[i.size] ?? 0), 0);
     return `<div class="wave" data-wave="${w}">
 <div class="wh">Wave ${w}<small>${inWave.length} item${inWave.length === 1 ? "" : "s"} in parallel</small><small>≈${days} day${days === 1 ? "" : "s"} if fully parallel</small></div>
 <div class="chips">${inWave
@@ -282,13 +281,13 @@ ${
 </div>
 
 <h2>Critical path</h2>
-<div class="path">${cp.path.map((id) => `<span class="n" data-id="${esc(id)}">${esc(id)}</span>`).join('<span class="a">→</span>')}</div>
-<p class="meta">${cp.path.length} items, ≈${k.criticalDays} days end to end however many people are on it. Total work ≈${k.days} days, so about <b>${k.parallelism}×</b> parallelism is available.</p>
+<div class="path">${k.criticalPath.map((id) => `<span class="n" data-id="${esc(id)}">${esc(id)}</span>`).join('<span class="a">→</span>')}</div>
+<p class="meta">${k.criticalPath.length} items, ≈${k.criticalDays} days end to end however many people are on it. Total work ≈${k.days} days, so about <b>${k.parallelism}×</b> parallelism is available.</p>
 
 <h2>Waves</h2>
 <div class="filters">
 <input id="q" type="search" placeholder="Filter by serial, title or keyword…" aria-label="Filter">
-<select id="f-wave" aria-label="Wave"><option value="">All waves</option>${Array.from({ length: waves }, (_, w) => `<option value="${w}">Wave ${w}</option>`).join("")}</select>
+<select id="f-wave" aria-label="Wave"><option value="">All waves</option>${waves.map((w) => `<option value="${w}">Wave ${w}</option>`).join("")}</select>
 <select id="f-pri" aria-label="Priority"><option value="">All priorities</option><option>P0</option><option>P1</option><option>P2</option></select>
 <select id="f-lane" aria-label="Lane"><option value="">All lanes</option>${lanes.map((l) => `<option>${esc(l)}</option>`).join("")}</select>
 <button id="clear" type="button">Clear selection</button>

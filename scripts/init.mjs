@@ -16,6 +16,55 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { Refusal } from "./graph.mjs";
+
+/**
+ * Names that already mean something directly under `.gainwix/`. A component
+ * called `current` would turn the remembered-choice file into a directory.
+ */
+const RESERVED = new Set(["current", "README.md", "autonomy.md", "deploy-context.json"]);
+
+/**
+ * A component name is a folder under `.gainwix/` — one path segment, nothing
+ * that climbs out of it.
+ *
+ * ⛔ `--component ../x` used to write a whole component outside `.gainwix/`.
+ */
+export function checkComponent(name) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name) || RESERVED.has(name)) {
+    throw new Refusal(
+      `"${name}" cannot be a component name: use letters, digits, ".", "_" or "-", ` +
+        `starting with a letter or digit (and not ${[...RESERVED].join(", ")})`,
+    );
+  }
+  return name;
+}
+
+/**
+ * A serial prefix stamps every id in the component, permanently: `AB` → `AB-001`.
+ *
+ * ⚠ Letters and digits only, starting with a letter. Anything else ends up inside
+ * an id, an HTML attribute and a pattern that finds the next serial.
+ */
+export function checkPrefix(prefix) {
+  if (!/^[A-Za-z][A-Za-z0-9]{0,9}$/.test(prefix)) {
+    throw new Refusal(
+      `"${prefix}" cannot be a serial prefix: use up to 10 letters and digits, starting with a letter (e.g. AB)`,
+    );
+  }
+  return prefix;
+}
+
+/**
+ * The line in `inbox.md` that raw ideas go below.
+ *
+ * ⛔ The commands find the ideas by this exact text — `/gx-next`, `/gx-sing`,
+ * `/gx-ping`, `/gx-about` and `/gx-issue-pick` all name it. A test holds every
+ * command to it, because the inbox was once written with a different marker
+ * and nothing errored.
+ */
+export const INBOX_MARKER = "<!-- Add action items below this line -->";
+
 /** Files that mark a directory as a buildable component. */
 const MARKERS = [
   "package.json",
@@ -151,7 +200,7 @@ export function currentComponent(root = ".") {
 export function setCurrent(root, component) {
   const all = components(root);
   if (!all.includes(component)) {
-    throw new Error(
+    throw new Refusal(
       `${component} is not set up in this repo. Components here: ${all.join(", ") || "(none)"}`,
     );
   }
@@ -231,17 +280,23 @@ on it.
 /** The notice that makes "do not edit this by hand" a fact and not a hope. */
 export const README = `# .gainwix
 
-**This directory is managed by the GainWix tools. Do not edit anything in it by
-hand.** The tools read these files, recompute what depends on what, and write
-the whole file back — an edit made here is either overwritten on the next run or,
-worse, kept alongside a stale dependency order that no longer matches it.
+**This directory is managed by the GainWix tools.** They read these files,
+recompute what depends on what, and write the whole file back — so a backlog
+edited by hand is either overwritten on the next run or, worse, kept alongside a
+stale dependency order that no longer matches it.
 
 This is state, the way \`.git\` is state.
+
+⭐ **Two files here are yours to type in:** each component's \`inbox.md\` (raw
+ideas, one per \`- \` line) and the project-commands table in \`autonomy.md\`.
+Everything else, leave to the tools.
 
 ## What is in here
 
 | | |
 |---|---|
+| \`autonomy.md\` | what \`/gx-go\`, \`/gx-sing\` and \`/gx-ping\` are pre-approved to do. ⭐ **Fill in its test and lint commands** |
+| \`current\` | which component the commands act on, when there is more than one |
 | \`deploy-context.json\` | ⛔ **written by the deploy flow and read by the production gate on every command.** Do not move, rename or nest it |
 | \`<component>/\` | one folder per component this repo builds |
 
@@ -249,6 +304,7 @@ Inside a component:
 
 | | |
 |---|---|
+| \`inbox.md\` | ⭐ raw ideas, typed by you. \`/gx-next\` plans them into the backlog |
 | \`backlog.html\` | everything still to do, ordered by what depends on what |
 | \`in-progress.html\` | only what is being worked on right now — transient |
 | \`completed.html\` | work that landed, with the PR that landed it |
@@ -275,6 +331,8 @@ day estimates are recomputed with it.
  * ⛔ Nothing goes in the repo root, and `deploy-context.json` is never moved.
  */
 export function create(root, component, prefix, { render, computeWaves }) {
+  checkComponent(component);
+  checkPrefix(prefix);
   const base = path.join(root, ".gainwix");
   const dir = path.join(base, component);
   const made = [];
@@ -322,10 +380,10 @@ yet: no dependencies, no size, no serial.
 \`/gx-next\` takes the top one, plans it, and adds it to the backlog with the
 dependencies that decide when it can start. It is removed from here as it goes.
 
-⚠ **This is the one file under \`.gainwix/\` that is yours to type in.**
-Everything else is written by the tools and recomputed on every run.
+⚠ **This file is yours to type in.** The backlog files beside it are written
+by the tools and recomputed on every run.
 
-<!-- Add ideas below this line -->
+${INBOX_MARKER}
 `,
     );
     made.push(`.gainwix/${component}/inbox.md`);

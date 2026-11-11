@@ -14,7 +14,7 @@ import path from "node:path";
 import { computeWaves } from "../graph.mjs";
 import { parseItems, parseMeta } from "../parse.mjs";
 import { render } from "../render.mjs";
-import { create, detect } from "../init.mjs";
+import { create, detect, INBOX_MARKER, README } from "../init.mjs";
 
 function tmpRepo(files) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "gx-init-"));
@@ -202,4 +202,55 @@ test("⛔ the preamble has somewhere to put the test and lint commands", () => {
   assert.match(preamble, /\| Test \| /, "a row for the test command");
   assert.match(preamble, /\| Lint \| /, "and one for lint");
   assert.match(preamble, /FILL THESE IN/, "and it says they are the operator's to write");
+});
+
+test("⛔ the inbox is written with the marker every command looks for", () => {
+  // The inbox was written with "Add ideas below this line" while /gx-next,
+  // /gx-sing, /gx-ping, /gx-about and /gx-issue-pick all looked for "Add action
+  // items below this line". Nothing errored; the ideas were just never found.
+  const root = tmpRepo({ "package.json": "{}" });
+  create(root, "admin", "AB", { render, computeWaves });
+  assert.ok(
+    fs.readFileSync(path.join(root, ".gainwix/admin/inbox.md"), "utf8").includes(INBOX_MARKER),
+  );
+
+  const commands = new URL("../../commands/", import.meta.url);
+  const named = [];
+  for (const f of fs.readdirSync(commands)) {
+    const body = fs.readFileSync(new URL(f, commands), "utf8");
+    for (const m of body.matchAll(/<!-- Add [^>]* below this line -->/g)) named.push([f, m[0]]);
+  }
+  assert.ok(named.length > 0, "the commands name the marker somewhere");
+  for (const [f, marker] of named) assert.equal(marker, INBOX_MARKER, `${f} looks for a different marker`);
+});
+
+test("the .gainwix README names every file it is talking about, and which ones are yours", () => {
+  for (const f of [
+    "inbox.md",
+    "autonomy.md",
+    "current",
+    "deploy-context.json",
+    "backlog.html",
+    "in-progress.html",
+    "completed.html",
+    "changes/",
+    "CHANGELOG.md",
+  ]) {
+    assert.ok(README.includes(`\`${f}\``), `${f} is not in .gainwix/README.md`);
+  }
+  // ⛔ It once said "do not edit anything in it by hand" while the inbox beside
+  // it said "this file is yours to type in".
+  assert.doesNotMatch(README, /Do not edit anything in it/);
+});
+
+test("⛔ a component name cannot climb out of .gainwix/, and a prefix is letters and digits", () => {
+  const root = tmpRepo({ "package.json": "{}" });
+  const make = (c, p) => () => create(root, c, p, { render, computeWaves });
+  assert.throws(make("../escaped", "AB"), /cannot be a component name/);
+  assert.throws(make("a/b", "AB"), /cannot be a component name/);
+  assert.throws(make("current", "AB"), /cannot be a component name/, "the remembered-choice file");
+  assert.throws(make("admin", "A.B"), /cannot be a serial prefix/);
+  assert.throws(make("admin", "1AB"), /cannot be a serial prefix/);
+  assert.ok(!fs.existsSync(path.join(root, "escaped")), "nothing was written outside .gainwix/");
+  assert.ok(!fs.existsSync(path.join(root, ".gainwix")), "nor inside it");
 });

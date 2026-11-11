@@ -27,6 +27,14 @@ export const DAYS = { S: 0.5, M: 1.5, L: 4 };
 export const PRIORITIES = ["P0", "P1", "P2"];
 
 /**
+ * A refusal the person can act on: a cycle, an unknown dependency, a bad name.
+ *
+ * ⭐ The CLI prints these as one line and exits 1. Anything else that is thrown
+ * is a bug in the tool and keeps its stack trace, so the two never look alike.
+ */
+export class Refusal extends Error {}
+
+/**
  * One backlog item.
  *
  * ⛔ `id` is permanent and never reused — a serial that has been retired stays
@@ -56,7 +64,7 @@ export function computeWaves(items) {
     if (state.get(id) === "done") return wave.get(id);
     if (state.get(id) === "visiting") {
       const cycle = [...trail.slice(trail.indexOf(id)), id].join(" → ");
-      throw new Error(
+      throw new Refusal(
         `the backlog has a dependency cycle and cannot be ordered: ${cycle}`,
       );
     }
@@ -65,7 +73,9 @@ export function computeWaves(items) {
     let w = 0;
     for (const d of item.deps) {
       if (!byId.has(d)) {
-        throw new Error(`${id} depends on ${d}, which is not in this backlog`);
+        throw new Refusal(
+          `${id} depends on ${d}, which is not in this component's backlog, in-progress or completed`,
+        );
       }
       w = Math.max(w, visit(d, [...trail, id]) + 1);
     }
@@ -119,11 +129,17 @@ export function criticalPath(items) {
   return best;
 }
 
-/** The six numbers across the top of the page. */
+/**
+ * The six numbers across the top of the page.
+ *
+ * ⚠ `waves` counts the waves **present in `items`**, not the highest wave number
+ * plus one. Wave numbers are component-wide, so an in-progress page holding
+ * one item from wave 3 and one from wave 5 has two waves on it, not six.
+ */
 export function kpis(items) {
-  const waves = items.length ? Math.max(...items.map((i) => i.wave)) + 1 : 0;
   const perWave = new Map();
   for (const i of items) perWave.set(i.wave, (perWave.get(i.wave) ?? 0) + 1);
+  const waves = perWave.size;
   const total = items.reduce((a, i) => a + (DAYS[i.size] ?? 0), 0);
   const cp = criticalPath(items);
   return {
@@ -141,9 +157,13 @@ export function kpis(items) {
 
 /** The next serial for a component, never reusing a retired one. */
 export function nextSerial(items, prefix) {
+  // ⚠ The prefix is read back out of the HTML, so it is matched literally: a
+  // regex metacharacter in it must not change which serials count.
+  const literal = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${literal}-(\\d+)$`);
   let max = 0;
   for (const i of items) {
-    const m = new RegExp(`^${prefix}-(\\d+)$`).exec(i.id);
+    const m = pattern.exec(i.id);
     if (m) max = Math.max(max, Number(m[1]));
   }
   return `${prefix}-${String(max + 1).padStart(3, "0")}`;
