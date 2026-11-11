@@ -154,6 +154,20 @@ test("a serial is never reused, even after the item is gone", () => {
   assert.equal(nextSerial([], "AB"), "AB-001");
 });
 
+test("⚠ a prefix is matched literally, never as a pattern", () => {
+  // The prefix comes back out of the HTML. "A.B" as a pattern also matched
+  // "AxB-007", and handed out A.B-008.
+  assert.equal(nextSerial([it("A.B-001"), it("AxB-007")], "A.B"), "A.B-002");
+});
+
+test("⚠ the wave count is the waves present, not the highest wave plus one", () => {
+  // An in-progress page holding one wave-3 item and one wave-5 item has two
+  // waves on it. Counting from zero said six.
+  const k = kpis([it("X", [], { wave: 3 }), it("Y", [], { wave: 5 })]);
+  assert.equal(k.waves, 2);
+  assert.equal(kpis([]).waves, 0);
+});
+
 test("⛔ readyWave returns ONE wave, never the whole backlog", () => {
   // Vivek: "run only one wave per execution but that one wave will kickoff
   // parallel execution paths." The parallelism is inside the wave.

@@ -4,22 +4,18 @@ description: Run a code-changing task end-to-end — branch, build, test, PR, sq
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
 # /gx-go — run a task under the autonomy preamble and record it as a Markdown change file
 
 `/gx-go` runs a code-changing task end-to-end (branch → build → test → commit →
 push → issue → PR → squash-merge → cleanup) and writes a **Markdown change
-record** under `changes/`. Markdown is used (not HTML) so the record **renders
+record** under `.gainwix/<component>/changes/`. Markdown is used (not HTML) so the record **renders
 inline on GitHub**. The change file is the single source of truth for "what this
 run did" — `/gx-go` **never reads, writes, or clears `.gainwix/<component>/inbox.md`** (that file
-is retired from this workflow).
+belongs to `/gx-next`).
 
 **This workflow is mandatory for every code change in this repo** — whether you
 arrived via `/gx-go`, via `/gx-sing`, or via a plain interactive prompt with no slash
@@ -29,13 +25,14 @@ shortcut path that skips them (see CLAUDE.md).
 **Exception — queuing work is NOT a code change.** If an interactive prompt
 simply asks to **add to the backlog / queue** — appending a raw idea to
 `.gainwix/<component>/inbox.md` (below the `<!-- Add action items below this line -->` marker)
-or a task to the backlog (`.gainwix/<component>/backlog.html`) — that is a lightweight queue edit, not a code change.
-Just edit the queue file directly (commit + push it to `develop` like a queue
-mutation if appropriate). Do **NOT** spin up this `/gx-go` workflow for it: no
+or a task to the backlog — that is a lightweight queue edit, not a code change.
+Append the idea to the inbox, or add the task with `$GX add` (never by editing
+`backlog.html`), and commit + push it to `develop` like a queue mutation if
+appropriate. Do **NOT** spin up this `/gx-go` workflow for it: no
 worktree/PR ceremony, **no `.gainwix/<component>/changes/*.md` record, and no `.gainwix/<component>/CHANGELOG.md` entry**.
 The change record documents *executed* work, never merely *queued* work.
 (`/gx-next` is the command that turns a queued `.gainwix/<component>/inbox.md` idea into a
-the backlog (`.gainwix/<component>/backlog.html`) task; it likewise produces no change record.)
+backlog task; it likewise produces no change record.)
 
 ## Step 0 — Read the autonomy preamble, then pick the task
 
@@ -161,7 +158,8 @@ away.
   in 0a). Everything else — the change record and the build/PR loop — is
   identical.
 
-⛔ **Never hand-edit any file under `.gainwix/`.** The tool recomputes the whole
+⛔ **Never hand-edit `backlog.html`, `in-progress.html` or `completed.html`** —
+every change to them goes through `$GX`. The tool recomputes the whole
 dependency order on every write, so an edit made by hand is either overwritten or
 kept beside an order that no longer matches it.
 → `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`
@@ -183,7 +181,7 @@ CHANGE_FILE="${RECORDS}/${TS}-change.md"
 `.gainwix/<component>/CHANGELOG.md`. A repo that builds four things keeps four
 histories, not one mixed pile.
 
-Create `changes/<TS>-change.md` from the **skeleton in Step 5** with the
+Create `.gainwix/<component>/changes/<TS>-change.md` from the **skeleton in Step 5** with the
 top-of-file fields filled in:
 
 - **Client info** (best-effort — never fabricate): the client + entrypoint
@@ -240,7 +238,7 @@ A task may produce **more than one PR** — record every issue and PR.
 
 ### Tracked kanban issue (`Tracks #<N>`) — open a SUBORDINATE, never close `#<N>`
 
-When the BACKLOG task being executed **references a tracked kanban issue `#<N>`**
+When the backlog item being executed **references a tracked kanban issue `#<N>`**
 — its body carries a `Tracks #<N>` line / a `[#<N>](<url>)` link (carried in by
 `/gx-issue-pick` → `/gx-next`) — `#<N>` is a kanban card (`queued`→`WIP`→`DONE`), NOT the
 change's own issue. Handle it as follows (this MODIFIES steps 5–6 above; for tasks
@@ -359,7 +357,7 @@ _{{OPTIONAL_NOTE — e.g. "Interactive-mode run (no backlog edit)." — omit thi
 ## Step 6 — Report
 
 Print a short roll-up to the operator: the task, the change file path
-(`changes/<TS>-change.md`), the issue + PR URLs, merge SHA(s), test counts,
+(`.gainwix/<component>/changes/<TS>-change.md`), the issue + PR URLs, merge SHA(s), test counts,
 and the elapsed time. Mention that the run was recorded to the change file
 (which renders on GitHub) and linked from `.gainwix/<component>/CHANGELOG.md`.
 
@@ -367,10 +365,10 @@ and the elapsed time. Mention that the run was recorded to the change file
 
 - **Applies to ALL code changes — but NOT to queuing work.** Interactive prompts
   that don't type `/gx-go` still follow this workflow (autonomy preamble + worktree
-  + one PR + change file + CHANGELOG link) — they just skip the the backlog (`.gainwix/<component>/backlog.html`) item
-  read/edit. **However**, a prompt that *only* adds to the backlog/queue
-  (appending to `.gainwix/<component>/inbox.md` or the backlog (`.gainwix/<component>/backlog.html`)) is NOT a code change: edit the
-  queue file directly with NO change file and NO CHANGELOG entry (see the
+  + one PR + change file + CHANGELOG link) — they just skip reading and moving a backlog
+  item. **However**, a prompt that *only* adds to the backlog/queue
+  (appending to `.gainwix/<component>/inbox.md`, or adding a task with `$GX add`) is NOT
+  a code change: do it with NO change file and NO CHANGELOG entry (see the
   Exception near the top). This is also stated in CLAUDE.md so it holds even when
   `/gx-go` isn't invoked.
 - **.gainwix/<component>/inbox.md is no longer part of `/gx-go`.** Do not read it, write it, or

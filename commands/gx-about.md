@@ -4,13 +4,9 @@ description: Product discovery — interview whoever owns the product, then writ
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
 # /gx-about — fill in ABOUT.md, then seed .gainwix/<component>/inbox.md from it
 
@@ -132,7 +128,7 @@ Step 0). This is the important part:
 - `.gainwix/<component>/inbox.md` is the **raw inbox**, not the planned queue. Write each item
   as a **concise one-line idea** (a title + a short phrase) — **not** the full
   user-story / acceptance-criteria detail. `/gx-next` expands each into a detailed
-  the backlog (`.gainwix/<component>/backlog.html`) task later; the rich feature spec is the *source material* you
+  backlog task later; the rich feature spec is the *source material* you
   reason from, not what you paste in here.
 - **One self-contained, one-PR-sized idea per `- ` line.**
 - **Order by dependency, foundational first** — auth, core entities/roles, the

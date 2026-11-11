@@ -147,6 +147,23 @@ test("the waves on the page are the computed ones, recomputed on re-parse", () =
   }
 });
 
+test("⚠ a stage page draws only the waves it holds", () => {
+  // Wave numbers are component-wide, so the in-progress page can hold waves 3
+  // and 5 and nothing else. It used to draw blocks and filter options for
+  // 0, 1, 2 and 4 as well, all empty.
+  const page = ITEMS.slice(0, 2).map((i, n) => ({ ...i, deps: [], wave: n ? 5 : 3 }));
+  const html = render(page, { ...META, stage: "in-progress" });
+  assert.deepEqual(
+    [...html.matchAll(/<div class="wave" data-wave="(\d+)"/g)].map((m) => m[1]),
+    ["3", "5"],
+  );
+  assert.deepEqual(
+    [...html.matchAll(/<option value="(\d+)">Wave/g)].map((m) => m[1]),
+    ["3", "5"],
+  );
+  assert.match(html, /<b>2<\/b><span>waves<\/span>/);
+});
+
 test("an empty backlog renders a page rather than a broken one", () => {
   const html = render([], META);
   assert.match(html, /Nothing here yet/);

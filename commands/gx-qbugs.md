@@ -4,13 +4,9 @@ description: Triage the latest /gx-qa run's failures into bug issues and fix ide
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
 # /gx-qbugs — file the latest /gx-qa run's failures as bug Issues + fix tasks
 
@@ -70,7 +66,7 @@ each filed bug happens later via the normal `/gx-go` workflow.
   `qa/bug-evidence/<ts>/<bug>/` screenshots; appended raw lines in
   `.gainwix/<component>/inbox.md`. It never edits `qa/RUN-REPORT-*` (the run output),
   the backlog (`.gainwix/<component>/backlog.html`), or any app source.
-- **Idempotence marker:** every Issue body + ACTION-ITEMS line carries a stable
+- **Idempotence marker:** every Issue body + inbox line carries a stable
   `[QA:<slug>]` marker for **each** workflow the bug covers, so a re-run never
   double-files a failure already in an open bug Issue.
 
@@ -227,7 +223,7 @@ $(optionally a couple of key step shots from the same evidence dir, each as its 
 **Full report:** \`qa/RUN-REPORT-${TS}.html#wf-${slug}\` (HTML committed; the per-run screenshot folder is local-only/gitignored — this Issue carries the relevant shots above).
 
 ---
-_Reproduce: \`/gx-qa\` re-runs the covered workflow(s) every run (persistent regression suite). Fix via \`/gx-go\` once \`/gx-next\`/\`/gx-sing\`/\`/gx-ping\` picks up the matching ACTION-ITEMS task._
+_Reproduce: \`/gx-qa\` re-runs the covered workflow(s) every run (persistent regression suite). Fix via \`/gx-go\` once \`/gx-next\`/\`/gx-sing\`/\`/gx-ping\` picks up the matching inbox item._
 EOF
 
 ISSUE_URL="$(gh issue create --label bug --title "$TITLE" --body-file "$BODY_FILE")"
@@ -252,7 +248,7 @@ line to each related Issue's body (`gh issue edit <n> --body-file <updated>`), o
 add a comment (`gh issue comment <n> --body "Related: #a #b"`). Keep each Issue's
 own discrete bug intact — cross-links are references, not merges.
 
-## Step 8 — Append one ACTION-ITEMS fix task per bug
+## Step 8 — Append one inbox fix task per bug
 
 For each NEW Issue, append ONE raw `- ` line to `.gainwix/<component>/inbox.md` **below the
 `<!-- Add action items below this line -->` marker** — a concrete BUG-FIX task
@@ -332,7 +328,7 @@ Print a roll-up:
 - **Issues created:** each `#N — <title>` (+ URL), with its covered workflow slug(s)
   and how many screenshots were attached.
 - **Cross-links:** which Issues were linked as related.
-- **ACTION-ITEMS added:** the bug-fix line(s).
+- **Inbox lines added:** the bug-fix line(s).
 - **Skipped (dedup):** each already-filed bug + WHY (open issue #N).
 - **Kanban sweep (Step 9b):** which `WIP` issues advanced to `DONE` — normally
   none (deferred to the next green `/gx-qa`, since `/gx-qbugs` triages a red run).

@@ -92,10 +92,44 @@ test("a bad component is refused rather than silently created", () => {
 test("an unknown dependency is refused, and says which", () => {
   const root = repo();
   gx(root, "create", "--component", "admin", "--prefix", "AB");
-  assert.match(
-    fails(root, "add", "--title", "Orphan", "--deps", "AB-999"),
-    /depends on AB-999/,
-  );
+  const out = fails(root, "add", "--title", "Orphan", "--deps", "AB-999");
+  assert.match(out, /depends on AB-999/);
+  assert.doesNotMatch(out, /\n\s+at /, "one line, not a stack trace");
+});
+
+test("a cycle is refused in one line, not a stack trace", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  // The new item is AB-001, so this makes it depend on itself.
+  const out = fails(root, "add", "--title", "Ouroboros", "--deps", "AB-001");
+  assert.match(out, /dependency cycle/);
+  assert.doesNotMatch(out, /\n\s+at /);
+});
+
+test("⛔ a flag with no value is refused, never read as the next flag's name", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  assert.match(fails(root, "add", "--title", "--pri", "P0"), /--title needs a value/);
+  assert.match(fails(root, "add", "--title", "X", "--deps"), /--deps needs a value/);
+  assert.match(fails(root, "add", "--title", "X", "--issue"), /--issue needs a value/);
+  assert.match(fails(root, "add", "--title", "  "), /--title is required/);
+  assert.doesNotMatch(gx(root, "show"), /AB-001/, "and nothing was added");
+});
+
+test("--pri and --size take only values the ordering understands", () => {
+  const root = repo();
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  assert.match(fails(root, "add", "--title", "X", "--pri", "p0"), /--pri must be one of P0, P1, P2/);
+  assert.match(fails(root, "add", "--title", "X", "--size", "XL"), /--size must be one of S, M, L/);
+  assert.match(fails(root, "show", "--stage", "done"), /--stage must be one of/);
+});
+
+test("⛔ --component cannot point outside .gainwix/", () => {
+  const root = repo();
+  assert.match(fails(root, "create", "--component", "../x", "--prefix", "AB"), /cannot be a component name/);
+  assert.ok(!fs.existsSync(path.join(root, "x")), "nothing was written outside .gainwix/");
+  gx(root, "create", "--component", "admin", "--prefix", "AB");
+  assert.match(fails(root, "show", "--component", "../admin"), /cannot be a component name/);
 });
 
 test("⛔ the full lifecycle: merged unblocks, picked up does not", () => {
