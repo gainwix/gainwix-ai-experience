@@ -38,7 +38,8 @@ every deploy is silently treated as production.
 
 ## Never edit these files by hand
 
-⭐ **Except `inbox.md`** — raw ideas, typed by a person, one per line. Everything
+⭐ **Except `inbox.md`** — raw ideas, typed by a person, one per line — **and the
+project-commands table in `autonomy.md`**, which a person fills in once. Everything
 else: the tool parses the file, recomputes what depends on what, and **writes the
 whole file back**. A hand edit is either overwritten on the next run or — worse — kept
 next to a dependency order that no longer matches it.

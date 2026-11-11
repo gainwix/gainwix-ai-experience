@@ -4,13 +4,9 @@ description: Dequeue the oldest `queued` GitHub issues into .gainwix/<component>
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
 # /gx-issue-pick — dequeue the oldest `queued` issues into .gainwix/<component>/inbox.md (FIFO)
 
@@ -100,7 +96,7 @@ gh issue list --state open --label queued --limit 500 \
 If there are **zero** eligible issues, print **"No `queued` issues to pick — the
 queue is empty."** and STOP (no label changes, no commit).
 
-## Step 2 — Append one ACTION-ITEMS task per issue (oldest → newest)
+## Step 2 — Append one inbox line per issue (oldest → newest)
 
 For each picked issue, in **oldest-first order**, append ONE raw `- ` line to
 `.gainwix/<component>/inbox.md` **below the `<!-- Add action items below this line -->`
@@ -115,7 +111,7 @@ picked batch the oldest issue is first, so it gets worked first). Format:
   `https://github.com/<owner>/<repo>/issues/<N>`) — use the real value, don't
   hardcode the repo.
 - The `[#<N>](<url>)` markdown link (issue **id + clickable URL**) is the **kanban
-  issue**, tracked through the pipeline: `/gx-next` carries it into the the backlog (`.gainwix/<component>/backlog.html`)
+  issue**, tracked through the pipeline: `/gx-next` carries it into the backlog
   task (its **Tracks:** line) and moves it `queued`→`WIP`; `/gx-go` then opens a
   **SUBORDINATE** issue under #<N> and its PR `Closes` the SUBORDINATE (**not**
   #<N>, which stays open); `/gx-qa`/`/gx-qbugs` move #<N> to `DONE` (label + close) once
@@ -140,7 +136,7 @@ that's already in `.gainwix/<component>/inbox.md` won't be re-picked next run).
 
 ```bash
 git add .gainwix/<component>/inbox.md
-git commit -m "issue-pick: dequeue <N> queued issue(s) into ACTION-ITEMS (oldest-first)
+git commit -m "issue-pick: dequeue <N> queued issue(s) into the inbox (oldest-first)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 git push origin develop

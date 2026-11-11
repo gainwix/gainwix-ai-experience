@@ -128,8 +128,12 @@ Auto mode does **not** remove that prompt.
 **6a. Scaffolding works with no GCP (even offline).** In a fresh app repo, run
 `/gx-init` and confirm it:
 - detects the stack, and
-- creates any missing `ABOUT.md`, `ACTION-ITEMS.md`, `BACKLOG.md`, `CHANGELOG.md`,
-  `changes/`, and `qa/QA.md` (leaving existing ones untouched),
+- asks first if the repo already keeps specs or a backlog somewhere (`about/`,
+  `active/`, `BACKLOG.md`, …),
+- creates `.gainwix/<component>/` — `inbox.md`, `backlog.html`,
+  `in-progress.html`, `completed.html`, `CHANGELOG.md`, `changes/` — plus
+  `.gainwix/README.md` and `.gainwix/autonomy.md`, and `qa/QA.md` if you want QA,
+  leaving existing files untouched and writing nothing to the repo root,
 - **without any GCP sign-in, project, or region prompt** — it must not touch GCP.
 
 **6b. No-project resolution happens on deploy.** `gcp_project` is optional.
@@ -150,10 +154,12 @@ From a **separate** application repository:
 
 1. `/plugin marketplace add /path/to/gainwix-ai-experience`
 2. `/plugin install gainwix@gainwix-workmates`
-3. `/gx-init` — confirm it scaffolds the dev-workflow files and does **not** touch
+3. `/gx-init` — confirm it sets up `.gainwix/` and does **not** touch
    GCP (no sign-in/project/region prompt).
 4. `/gx-about` — confirm it interviews you to fill in `ABOUT.md`, gates on your
-   approval, then seeds `ACTION-ITEMS.md` and gates again. No code, no GCP, no deploy.
+   approval, then seeds `.gainwix/<component>/inbox.md` and gates again. No code,
+   no GCP, no deploy. ⚠ **Currently blocked:** `/gx-about` stops unless `ABOUT.md`
+   already exists, and `/gx-init` no longer creates it.
 5. `/gx-sim` — confirm it resolves GCP access read-only, prints a plan, and applies
    nothing.
 6. `/gx-gcp-deploy` — confirm it resolves GCP access (sign-in + project + region)

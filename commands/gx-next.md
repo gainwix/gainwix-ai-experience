@@ -4,15 +4,11 @@ description: Take the first raw idea from the inbox, plan it into a detailed exe
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
-# /gx-next — plan one .gainwix/<component>/inbox.md entry into a the backlog task
+# /gx-next — plan one .gainwix/<component>/inbox.md entry into a backlog task
 
 The pipeline (note: this is the **reverse** of the old `/gx-next` — .gainwix/<component>/inbox.md
 is now the raw inbox and the backlog is the planned queue):
@@ -89,9 +85,10 @@ for confirmation — the operator invoked `/gx-next` knowing what it does.
 
 ## Step 2 — Plan it (build the task)
 
-Turn the raw item into a detailed, **executable** task, written as a single
-the backlog (`.gainwix/<component>/backlog.html`) item — a `- ` lead line plus an indented body so `/gx-go` captures the
-whole thing as one item. Shape:
+Turn the raw item into a detailed, **executable** task and add it with `$GX add`
+(above). `--title` is the one-line deliverable; the plan goes in `--detail`,
+which travels with the item — `$GX ready` hands it to the driver and `/gx-go`
+builds from it. Shape the detail like this:
 
 ```
 - **<Title>.** <one-line summary of the deliverable>
@@ -109,12 +106,13 @@ whole thing as one item. Shape:
     issue.>
 ```
 
-- **All body lines are indented ≥2 spaces** so the item reads as one block and
-  `/gx-go`'s body-capture takes the whole task. Pull from your knowledge of the
-  codebase and be concrete (controller paths, model names, rake tasks, migration
-  shapes).
-- If the raw idea clearly decomposes into independent deliverables, append
-  **multiple** `- ` tasks, each self-contained.
+- **Put the whole plan in `--detail`.** A driver hands `/gx-go` the item's detail,
+  not the raw idea, so whatever is left out is not built. Pull from your
+  knowledge of the codebase and be concrete (controller paths, model names, rake
+  tasks, migration shapes).
+- If the raw idea clearly decomposes into separate deliverables, add **multiple**
+  tasks — one `$GX add` each, each self-contained, with `--deps` between them
+  where one cannot start without another.
 - **Preserve GitHub issue references (as the kanban issue).** If the raw item
   references an issue (a `#<N>`, a `Tracks #<N>`, or an issue URL — e.g. items
   queued by `/gx-issue-pick` or `/gx-qbugs`), copy that reference into the planned task's
@@ -155,7 +153,7 @@ If the planned item **tracks a GitHub issue `#<N>`** (its **Tracks:** line carri
 
 ```bash
 gh label create WIP --color fbca04 \
-  --description "Work in progress — planned into BACKLOG via /gx-next" 2>/dev/null || true
+  --description "Work in progress — planned into the backlog via /gx-next" 2>/dev/null || true
 gh issue edit <N> --remove-label queued --add-label WIP   # queued → WIP (--remove-label is a no-op if absent)
 ```
 
@@ -188,13 +186,13 @@ Per the project convention, the queue mutation lands directly on `develop`.
 ## Step 6 — Report
 
 Print a short summary:
-- `Planned: <title>` and a one-line description of the BACKLOG task appended.
+- `Planned: <title>` and a one-line description of the task added, with its serial.
 - If the item tracked an issue, note the kanban move: `#<N> queued → WIP` (or that
   the transition was skipped/failed and why).
 - How many raw items remain in `.gainwix/<component>/inbox.md` below the marker.
 - The commit hash.
-- Pointer: `Run /gx-go to execute the top BACKLOG task, or /gx-next again to plan the
-  next ACTION-ITEMS entry.`
+- Pointer: `Run /gx-go to execute the next ready backlog item, or /gx-next again to plan
+  the next inbox entry.`
 
 ## Notes
 

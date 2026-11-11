@@ -4,13 +4,9 @@ description: One-line orientation to every GainWix /gx command.
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
 You are showing the developer a quick map of GainWix — the `/gx` dev-workflow commands. Print exactly this, then stop — do not take any other action:
 
@@ -19,7 +15,7 @@ You are showing the developer a quick map of GainWix — the `/gx` dev-workflow 
 Get started:
 - `/gx` — this orientation.
 - `/gx-help <command>` — deep dive on one command.
-- `/gx-init` — set up your repo: detect the stack and scaffold the dev-workflow files.
+- `/gx-init` — set up your repo: detect what it builds and make room under `.gainwix/`.
 - `/gx-about` — fill in ABOUT.md by interview, then seed .gainwix/<component>/inbox.md from it. Run after `/gx-init`, before building.
 
 Build & ship (changes → PR + change record):
@@ -49,4 +45,4 @@ Hygiene:
 Coming soon:
 - `/gx-add`, `/gx-rm` — add/remove connectors or MCPs. · `/gx-reset` — reset config. · `/gx-debug` — diagnostics.
 
-Start with `/gx-init`, then `/gx-about` to fill ABOUT.md + seed your backlog. Build with `/gx-next` → `/gx-go` (or `/gx-sing`); capture work as issues first with `/gx-issue-add` → `/gx-issue-pick`. Ship with `/gx-gcp-deploy` whenever you're ready.
+Start with `/gx-init`, then `/gx-about` to fill ABOUT.md + seed your inbox. Build with `/gx-next` → `/gx-go` (or `/gx-sing`); capture work as issues first with `/gx-issue-add` → `/gx-issue-pick`. Ship with `/gx-gcp-deploy` whenever you're ready.

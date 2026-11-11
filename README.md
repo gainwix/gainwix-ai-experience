@@ -53,8 +53,8 @@ Authentication uses your own credentials under least privilege — nothing is ha
 
 ```
 /gx                 # one-line map of every command
-/gx-init            # set up the repo: detect the stack + scaffold the dev-workflow files
-/gx-about           # interview to fill in ABOUT.md, then seed ACTION-ITEMS.md from it
+/gx-init            # set up the repo: detect what it builds + make room under .gainwix/
+/gx-about           # interview to fill in ABOUT.md, then seed the inbox from it
 /gx-next            # plan the top idea into a real, executable task
 /gx-go              # build one task end-to-end → PR → merge, with a change record
 /gx-sing            # run one wave, one task at a time, then stop
@@ -94,15 +94,15 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | :------ | :----- | :------ |
 | `/gx` | ✅ | One-line orientation. |
 | `/gx-help <cmd>` | ✅ | Deep dive on one command. |
-| `/gx-init` | ✅ | Set up the repo: detect the stack + scaffold the dev-workflow files. |
-| `/gx-about` | ✅ | Fill in `ABOUT.md` by interview, then seed `ACTION-ITEMS.md` from it. Run after `/gx-init`. |
+| `/gx-init` | ✅ | Set up the repo: detect what it builds, ask how you already keep specs and backlogs, and make room under `.gainwix/`. |
+| `/gx-about` | ✅ | Fill in `ABOUT.md` by interview, then seed `.gainwix/<component>/inbox.md` from it. Run after `/gx-init`. |
 
 **Build & ship the work** (ported from the AptonWorks dev pipeline — assume a `develop` trunk; the queue lives under `.gainwix/<component>/`, `qa/` stays where the developer put it)
 
 | Command | Status | Purpose |
 | :------ | :----- | :------ |
-| `/gx-next` | ✅ | Plan the top `ACTION-ITEMS.md` idea into a `BACKLOG.md` task. |
-| `/gx-go` | ✅ | Run one task end-to-end (branch → test → PR → squash-merge) + a `changes/*.md` record. |
+| `/gx-next` | ✅ | Plan the top idea in `inbox.md` into a task in `backlog.html`, with its dependencies. |
+| `/gx-go` | ✅ | Run one task end-to-end (branch → test → PR → squash-merge) + a `.gainwix/<component>/changes/*.md` record. |
 | `/gx-sing` | ✅ | One wave, worked one item at a time, each merged before the next — then stop. |
 | `/gx-ping` | ✅ | One wave, its items built at the same time (worktree each), merged serially — then stop. |
 | `/gx-qa` | ✅ | End-to-end browser + API QA → screenshotted report. |
@@ -110,7 +110,7 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 | `/gx-qloop` | ✅ | qa → qbugs → ping until the suite is green. |
 | `/gx-issue-add <text>` | ✅ | File a GitHub issue tagged `queued`. |
 | `/gx-issue-list` | ✅ | View the `queued` queue, oldest-first (read-only). |
-| `/gx-issue-pick` | ✅ | Dequeue oldest `queued` issues into `ACTION-ITEMS.md`. |
+| `/gx-issue-pick` | ✅ | Dequeue oldest `queued` issues into `inbox.md`. |
 | `/gx-sweep` | ✅ | Prune old QA reports + merged branches. |
 
 **Deploy** (one of the features)

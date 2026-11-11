@@ -4,13 +4,9 @@ description: End-to-end QA — boot your stack (frontend + backend) against an i
 disable-model-invocation: true
 ---
 
-> ⛔ **Paths changed on 12 Sept.** The queue no longer lives in the repo root.
-> **Read `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md` before acting on any
-> file named below** — `BACKLOG.md` is now `.gainwix/<component>/backlog.html`,
-> `CHANGELOG.md` and `changes/` are per component, and every read or write goes
-> through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`. ⚠ Mentions of the
-> old root paths in the prose below are being rewritten command by command; where
-> one disagrees with that document, **that document wins.**
+> Every file this command reads or writes is listed in
+> `${CLAUDE_PLUGIN_ROOT}/docs/where-things-live.md`, and every backlog read or
+> write goes through `node ${CLAUDE_PLUGIN_ROOT}/scripts/gx-backlog.mjs`.
 
 # /gx-qa — end-to-end QA run (browser + API), reported with screenshots
 
@@ -312,7 +308,7 @@ to develop as an operational `/gx-qa` run (no `.gainwix/<component>/changes/*.md
 On a **green** run, also report the kanban sweep from Step 5b: which `WIP` issues
 advanced to `DONE` (all subordinates closed) and which stayed `WIP` (subordinates
 still open). If there were failures, suggest running **`/gx-qbugs`** to file them as
-`bug` Issues + ACTION-ITEMS fix tasks (it reads the JSON sidecar).
+`bug` Issues + inbox fix tasks (it reads the JSON sidecar).
 
 ## Artifact conventions (committed)
 
@@ -327,7 +323,7 @@ still open). If there were failures, suggest running **`/gx-qbugs`** to file the
   `name`/`slug`/`route`/`surfaces`/`mode`/`status`/`tested`/`steps` and, for a
   failure, `error{message, where{step,route,component,endpoint,httpStatus},
   screenshot}`). It is the STABLE failure source the **`/gx-qbugs`** command reads to
-  file bug Issues + ACTION-ITEMS fix tasks (no HTML scraping). Secret-safe: built
+  file bug Issues + inbox fix tasks (no HTML scraping). Secret-safe: built
   from the same objects the HTML uses (only `${VAR}` step labels + masked data).
   Written alongside the HTML after every workflow (append-as-you-go), so an
   interrupted run still leaves a current sidecar.
