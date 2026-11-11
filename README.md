@@ -29,6 +29,13 @@ From any Claude Code session:
 
 (Or, for a local clone: `/plugin marketplace add /path/to/gainwix-ai-experience`.)
 
+That installs **`main`, the released version**. To try work that has not been
+released yet, add the marketplace from `develop` instead:
+
+```
+/plugin marketplace add gainwix/gainwix-ai-experience#develop
+```
+
 ### 2. Install the plugin
 
 ```
@@ -131,6 +138,30 @@ Monitoring is intentionally **out of scope** for this build (the artifact leaves
 🚧 = declared and discoverable, behavior coming in a later build.
 
 ---
+
+## Branches and releases
+
+Anyone who installs this plugin gets the repo's **default branch**, and every new
+commit there counts as an update. So the two branches have separate jobs:
+
+| Branch | What it is |
+| :----- | :--------- |
+| `main` | **The released version** — the default branch, and what `/plugin marketplace add` installs. It only ever moves forward to a `develop` commit that has been verified. |
+| `develop` | **Where work lands.** Every pull request targets `develop`, never `main`. |
+
+⚠ `main` is the default branch, so **pass `--base develop`** when opening a pull
+request (`gh pr create --base develop`), or pick `develop` as the base on GitHub.
+
+**To release:** once `develop` is verified — tests pass (`node --test scripts/test/`)
+and the changed commands have been tried in Claude Code — move `main` forward to it:
+
+```bash
+git fetch origin
+git push origin origin/develop:main
+```
+
+That is an ordinary push, not a force push, so it only succeeds when `main` has
+nothing `develop` lacks. `main` is protected against force pushes and deletion.
 
 ## Local development & testing
 
