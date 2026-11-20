@@ -298,8 +298,13 @@ both.**
 - **A merge conflicts, or the rebased re-test fails** — a branch and a PR exist:
   close or clearly park the PR and delete the pushed branch. Let the next run
   retry it, likely serially via `/gx-sing`.
+- **A team went green, but no pull request was possible** — no `origin`, `gh`
+  not signed in, or the PR could not be opened. ⭐ **A set-up problem, not a
+  fault in the work.** ⛔ **Keep the pushed branch**: the next `/gx-go` on this
+  serial reuses it instead of building it again. Commit the change record to
+  `develop`, remove the worktree.
 
-Both then: `$GX move --id <SERIAL> --to backlog`, record the error **verbatim**
+All three then: `$GX move --id <SERIAL> --to backlog`, record the error **verbatim**
 plus which failure it was, and **carry on with the rest of the wave.**
 
 ⚠ **The rule on `$GX` exit codes, because it is load-bearing:** a non-zero `$GX`
@@ -342,6 +347,9 @@ like bad luck. It needs a person.
     ✗ <SERIAL>  <title>       never went green | would not merge
                               <reason verbatim>
                               returned to the backlog; blocking <M> item(s)
+    ⏸ <SERIAL>  <title>       green, parked: no PR possible
+                              branch <branch> kept; <the one command that fixes it>
+                              returned to the backlog; blocking <M> item(s)
 
   Grouping:  [<SERIAL> <SERIAL>] then [<SERIAL>] — <why they were split>
 
@@ -352,6 +360,7 @@ like bad luck. It needs a person.
 
 | Condition | Print |
 |---|---|
+| **Nothing merged, and every item that came back was "no PR possible"** | `wave <N> is built but not merged — no pull request was possible. <the one command that fixes it>, then run /gx-ping again; it reuses the branches.` ⛔ **Do not say "failed" or "fix <SERIAL>"** — the code is fine. |
 | **Nothing merged this run** | `wave <N> failed entirely — nothing merged. Fix <the failed SERIALs> before running again.` |
 | Closing `$GX ready` gives the **same** wave number | `wave <N> is unfinished — <its count> item(s) came back. Run /gx-ping again to retry.` |
 | Closing `$GX ready` gives a **higher** number | `wave <the number it returned> — <its count> item(s) ready. Run /gx-ping again.` |

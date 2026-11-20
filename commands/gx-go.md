@@ -223,7 +223,15 @@ The file is written as you go — re-write/patch it at each milestone below.
 Run the project's standard one-PR-per-change workflow (one git worktree per
 session — see CLAUDE.md; never edit the shared main checkout). Typically:
 
-1. From a fresh branch off `origin/develop`, implement the task.
+1. **First, look for a parked branch for this item:**
+   `git fetch origin && git branch -a --list "*<SERIAL>*"`.
+   - **One exists** (an earlier run built it, went green, and stopped because no
+     pull request was possible): ⛔ **reuse it — never create a second branch for
+     the same serial.** Check it out in your worktree, rebase it onto
+     `origin/develop`, re-run the tests, and carry on from step 4. The work is
+     already done; only the PR was missing. Note *"reused parked branch
+     `<branch>`"* in the change record.
+   - **None:** from a fresh branch off `origin/develop`, implement the task.
 2. Run the project's test suite where appropriate (the exact command is declared
    in `.gainwix/autonomy.md` — e.g. `npm test`, `bin/rails test`,
    `pytest`, `go test ./...`, `make check`), only when the change touches code the
@@ -257,7 +265,9 @@ decide on your own to merge the branch into `develop` locally. Ask with
   fixes it (`gh auth login`, `git remote add origin …`), then continue.
 - **Merge locally this once**: `git checkout develop && git merge --squash <branch>`
   and commit; the change record says *"merged locally, no PR"*.
-- **Stop here**: leave the branch unmerged and report.
+- **Stop here**: leave the branch pushed and unmerged — it is finished work, so do
+  not delete it; the next run picks it up (step 1). Report it as **"green, parked:
+  no PR possible"**, which is a set-up problem, not a fault in the work.
 
 The pre-approval in `.gainwix/autonomy.md` covers *opening a PR and squash-merging
 it*, not replacing the PR with a local merge. When no one can be asked (a
