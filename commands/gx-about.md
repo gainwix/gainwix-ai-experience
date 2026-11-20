@@ -165,6 +165,12 @@ Step 0). This is the important part:
   needs them is planned. ⚠ **The order itself sets no waves** — those come only
   from the dependencies `/gx-next` records — and each `/gx-sing` / `/gx-ping` run
   takes **one wave** and stops.
+- ⭐ **But put one quick win at the very top** — a small idea that needs nothing
+  else (a bug you noticed, a missing check, a one-screen fix). `/gx-next` plans
+  from the top, so the first thing a new owner builds should finish in minutes
+  and prove the loop works, not open a week-long foundation. If no idea is that
+  small, ask which one goes first (`AskUserQuestion`, the smallest first and
+  recommended).
 - **Never** touch the marker line or anything above it.
 
 ## Step 5 — 🚦 GATE 2 (verify) + report
@@ -172,13 +178,32 @@ Step 0). This is the important part:
 - **Show me the seeded `.gainwix/<component>/inbox.md`** and get approval via `AskUserQuestion`
   (**Approve** / **Revise** — e.g. reorder, add, drop, split an item). Loop until
   I approve.
-- Report what you wrote: which `ABOUT.md` sections you filled and how many action
-  items you seeded. Note that **both files are written but NOT committed** —
-  they're mine to review and commit.
+- **Commit both files on `develop`** once I approve — and only these two:
+
+  ```bash
+  git rev-parse --abbrev-ref HEAD          # on develop? if not: git checkout develop
+  git add ABOUT.md .gainwix/<component>/inbox.md
+  git commit -m "docs(about): project overview and first ideas from /gx-about"
+  git push origin develop   # only if the repo has an origin remote
+  ```
+
+  ⛔ **Why this is not left to me:** an uncommitted `ABOUT.md` and inbox used to
+  make the very next `/gx-next` refuse to run — every new user hit it on their
+  first try. If the commit or push fails (no `develop` yet, a protected branch,
+  no remote), say so in one plain line with the command that fixes it; don't
+  retry around it.
+- Report what you wrote: which `ABOUT.md` sections you filled, how many action
+  items you seeded, and the commit you made.
 
 ## Step 6 — Hand off to the dev workflow
 
 Close with the next steps, plain-spoken:
+
+⛔ **Check before you say anything about branches.** Run
+`git branch --list develop` and `git ls-remote --heads origin develop` (skip the
+second when there is no `origin`). Only if `develop` is missing say the repo
+needs one, and give the command. Never write *"the repo still only has main"*
+from memory — `/gx-init` has usually just made `develop`.
 
 - **Plan + ship one item:** `/gx-next` (plan the top idea into the backlog (`.gainwix/<component>/backlog.html`)) →
   `/gx-go` (execute it end-to-end).

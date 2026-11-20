@@ -9,6 +9,7 @@
 // Usage:
 //   gx-backlog detect [--root .]
 //   gx-backlog create --component admin --prefix AB [--root .]
+//   gx-backlog commands [--install …] [--test …] [--lint …] [--coverage …]   (fill autonomy.md's table)
 //   gx-backlog show    --component admin [--stage backlog]
 //   gx-backlog ready   --component admin
 //   gx-backlog add     --component admin --title "…" [--detail …] [--deps "AB-001 AB-002"]
@@ -37,6 +38,7 @@ import {
   create,
   currentComponent,
   detect,
+  setCommands,
   setCurrent,
 } from "./init.mjs";
 
@@ -177,6 +179,16 @@ try {
     case "components":
       console.log(JSON.stringify(components(root), null, 2));
       break;
+
+    case "commands": {
+      const filled = setCommands(root, a);
+      console.log(
+        filled.length
+          ? `filled ${filled.join(", ")} in .gainwix/autonomy.md`
+          : "nothing filled — every row given already had a command, or none was given",
+      );
+      break;
+    }
 
     case "use":
       console.log(`now working on ${setCurrent(root, need("component"))}`);
@@ -319,7 +331,7 @@ try {
 
     default:
       die(
-        `unknown command ${cmd ?? "(none)"}. One of: detect, create, components, use, show, ready, add, move, rebuild`,
+        `unknown command ${cmd ?? "(none)"}. One of: detect, create, commands, components, use, show, ready, add, move, rebuild`,
       );
   }
 } catch (e) {

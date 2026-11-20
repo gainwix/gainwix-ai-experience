@@ -326,6 +326,77 @@ day estimates are recomputed with it.
 `;
 
 /**
+ * Lines added to `.git/info/exclude` — git's local, untracked ignore list.
+ *
+ * ⛔ **Both were seen breaking a first run.** macOS Finder drops a hidden
+ * `.DS_Store` in any folder it opens, and `/gx-next`'s clean check counted it
+ * as an edit (13 Nov). Build worktrees land in `.claude/worktrees/` and showed
+ * up in `git status` mid-wave. `.git/info/exclude` keeps the promise that
+ * `/gx-init` writes nothing to the repo root: it is not tracked, not shared,
+ * and not a `.gitignore` anybody has to review.
+ */
+export const EXCLUDES = [".DS_Store", ".claude/worktrees/"];
+
+/** Add EXCLUDES to `.git/info/exclude`. Returns the lines added; none outside a git repo. */
+export function excludeLocal(root) {
+  const gitDir = path.join(root, ".git");
+  let st;
+  try {
+    st = fs.statSync(gitDir);
+  } catch {
+    return [];
+  }
+  // ⚠ In a worktree `.git` is a file pointing elsewhere; leave that alone.
+  if (!st.isDirectory()) return [];
+  const file = path.join(gitDir, "info", "exclude");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const before = exists(file) ? fs.readFileSync(file, "utf8") : "";
+  const have = new Set(before.split(/\r?\n/).map((l) => l.trim()));
+  const add = EXCLUDES.filter((e) => !have.has(e));
+  if (add.length) {
+    const sep = before && !before.endsWith("\n") ? "\n" : "";
+    fs.writeFileSync(file, `${before}${sep}# added by /gx-init\n${add.join("\n")}\n`);
+  }
+  return add;
+}
+
+/** The rows of autonomy.md's commands table, by flag. */
+const COMMAND_ROWS = {
+  install: "Install / setup",
+  test: "Test",
+  lint: "Lint",
+  coverage: "Coverage *(optional)*",
+};
+
+/**
+ * Fill autonomy.md's project-commands table.
+ *
+ * ⭐ Only rows still showing the `<command>` placeholder are filled — a command
+ * somebody already typed in is theirs, and is kept. Returns the rows filled.
+ */
+export function setCommands(root, given) {
+  const file = path.join(root, ".gainwix", "autonomy.md");
+  if (!exists(file)) {
+    throw new Refusal("no .gainwix/autonomy.md here — run /gx-init (gx-backlog create) first");
+  }
+  let text = fs.readFileSync(file, "utf8");
+  const filled = [];
+  for (const [flag, label] of Object.entries(COMMAND_ROWS)) {
+    const cmd = given[flag];
+    if (typeof cmd !== "string" || !cmd.trim()) continue;
+    if (/[`\n|]/.test(cmd)) {
+      throw new Refusal(`the ${flag} command cannot contain a backtick, "|" or a line break: ${cmd}`);
+    }
+    const row = `| ${label} | \`<command>\` |`;
+    if (!text.includes(row)) continue;
+    text = text.replace(row, `| ${label} | \`${cmd.trim()}\` |`);
+    filled.push(flag);
+  }
+  fs.writeFileSync(file, text);
+  return filled;
+}
+
+/**
  * Make room for a component. Idempotent — an existing file is never touched.
  *
  * ⛔ Nothing goes in the repo root, and `deploy-context.json` is never moved.
@@ -402,5 +473,6 @@ ${INBOX_MARKER}
     fs.writeFileSync(keep, "");
     made.push(`.gainwix/${component}/changes/`);
   }
+  for (const line of excludeLocal(root)) made.push(`.git/info/exclude entry ${line}`);
   return made;
 }

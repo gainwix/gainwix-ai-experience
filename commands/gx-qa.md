@@ -242,7 +242,7 @@ This is a `/gx-sweep`-style operational commit — NOT a `/gx-go` change:
 git add qa/RUN-REPORT-*.html qa/RUN-REPORT-*.json qa/RUN-LOG.md
 git commit -m "qa: run report <ts> (<passed>/<total> passed)
 
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
 git push origin develop
 ```
 

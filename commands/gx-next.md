@@ -56,9 +56,21 @@ for confirmation — the operator invoked `/gx-next` knowing what it does.
   - Otherwise run `git checkout develop`.
 - **Sync:** `git fetch origin develop && git pull origin develop`. If the pull
   fails (uncommitted changes, diverged history), STOP and surface the error.
-- **Cleanliness check:** `git status --porcelain .gainwix`.
-  If either is already dirty, STOP and tell the operator — `/gx-next` would
+- **Cleanliness check:**
+
+  ```bash
+  git status --porcelain .gainwix | grep -v -E '(^|/)\.DS_Store$' | grep -v -E '/inbox\.md$'
+  ```
+
+  If that prints anything, STOP and tell the operator — `/gx-next` would
   otherwise sweep their pre-existing edits into its commit.
+  ⭐ **Two things are NOT dirt, so they never stop the run:**
+  - **`inbox.md` edits.** The inbox is the owner's to type in, and `/gx-about`
+    seeds it; this command edits and commits it anyway, so carry those edits into
+    the commit rather than refusing. Say so in the report: *"your inbox edits were
+    committed with this plan"*.
+  - **`.DS_Store`.** macOS Finder drops one in any folder it opens. It is never
+    staged — `/gx-init` lists it in `.git/info/exclude` — and never a reason to stop.
 - **GitHub auth (best-effort):** run `gh auth status`. It's needed only for the
   kanban `queued`→`WIP` transition in Step 4b when the planned item tracks an
   issue. If the item references **no** issue, `gh` isn't required — don't abort on
@@ -175,7 +187,7 @@ Per the project convention, the queue mutation lands directly on `develop`.
   added it to .gainwix/<component>/backlog.html with $GX add, which
   recomputed the waves. The consumed raw item was removed from the inbox.
 
-  Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+  Co-Authored-By: Claude <noreply@anthropic.com>
   ```
 
 - Push to develop: `git push origin develop` — or `git push origin HEAD:develop`
