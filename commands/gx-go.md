@@ -88,6 +88,19 @@ COMPONENT=<the resolved component>
   any code changes; the issue this run opens does not exist until Step 5. The PR
   link is written later, on the `completed` move.
 
+  ⛔ **Commit the move straight away, on `develop`, on its own:**
+
+  ```bash
+  git add .gainwix/<component>/backlog.html .gainwix/<component>/in-progress.html
+  git commit -m "chore(gx): <SERIAL> in progress"
+  git push origin develop   # only when there is an origin
+  ```
+
+  Left uncommitted, the two files sit changed on `develop` for the whole run —
+  and if the run stops early (a failed test, the no-PR question below), the next
+  `/gx-next` refuses on them. Seen in the 20 Nov test. If the push is refused,
+  say so in one line and carry on: the commit is what matters locally.
+
   ⛔ **That is the dequeue, and it happens now rather than at merge time.** An
   item in `in-progress.html` is *already taken*, so a parallel session will not
   pick up the same work — but it **unblocks nothing**. Only merging does that.
@@ -100,7 +113,8 @@ COMPONENT=<the resolved component>
 
   ⚠ **If the run fails or is abandoned, put it back:** `$GX move --id <SERIAL>
   --to backlog`. An item stranded in `in-progress.html` blocks everything behind
-  it and nothing will say so.
+  it and nothing will say so. Commit the put-back the same way
+  (`chore(gx): <SERIAL> back to the backlog`).
 
 - **Driven mode** — a driver (`/gx-sing`, `/gx-ping`) handed you **one item's
   serial, title, detail, spec, deps and lane**, taken from its captured
