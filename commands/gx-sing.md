@@ -73,8 +73,20 @@ exist. The operator finishes it or returns it with
 
 ### 1 · Plan — top up the backlog from the inbox
 
-For each raw `- ` item below the `<!-- Add action items below this line -->`
-marker in `.gainwix/<component>/inbox.md`, top-down and **up to 5 this run**, run
+⛔ **Ask first — planning costs time and money, and can change the wave.** Count
+the raw `- ` items below the `<!-- Add action items below this line -->` marker in
+`.gainwix/<component>/inbox.md`. If there are none, skip to step 2. If there are
+some, ask with `AskUserQuestion` before planning anything:
+
+- **Build what's ready, plan nothing** *(recommended — first)*: the wave already
+  in the backlog, as it stands.
+- **Plan the top idea first**, then build.
+- **Plan up to 5 ideas first**, then build. Say it adds a few minutes per idea.
+
+When no one can be asked (a scripted run), plan nothing. The ideas wait for
+`/gx-next`.
+
+For each item the answer allows, top-down, run
 the `/gx-next` planning (`${CLAUDE_PLUGIN_ROOT}/commands/gx-next.md`) — **the
 whole of it, unmodified, including its own commit and push.** ⚠ **Do not batch
 those into one commit:** `/gx-next` commits per invocation, and overriding that
@@ -314,8 +326,8 @@ operator acts on each differently.
 
 ## Notes
 
-- **`/gx-sing` vs `/gx-ping`.** Same scope — one wave, and both plan up to 5
-  inbox items first. Two real differences: `/gx-sing` works the items one at a
+- **`/gx-sing` vs `/gx-ping`.** Same scope — one wave, and both ask before
+  planning up to 5 inbox items first. Two real differences: `/gx-sing` works the items one at a
   time, `/gx-ping` builds them together — and in both, **the driver merges.** For a wave of one they do the same work.
   Use `/gx-sing` when the wave's items all touch the same files anyway, or to
   avoid the token cost of parallel teams.

@@ -2,7 +2,7 @@
 
 A set of `/gx` slash commands that drive an AI teammate through your whole build loop — **plan → build → QA → ship** — right inside [Claude Code](https://code.claude.com). You capture an idea; the commands take it to reviewed, merged code. **Deploying to Google Cloud Run is one of those commands**, not the whole story.
 
-Distributed as a Claude Code plugin from this private marketplace.
+Distributed as a Claude Code plugin from this marketplace.
 
 > Install it and you get the `/gx` commands — no setup prompts, no cloud config up front.
 
@@ -36,10 +36,38 @@ released yet, add the marketplace from `develop` instead:
 /plugin marketplace add gainwix/gainwix-ai-experience#develop
 ```
 
-### 2. Install the plugin
+### 2. Install the plugin — for this repo only
 
+⭐ **Run this from inside the repo you want `/gx` in:**
+
+```bash
+claude plugin install gainwix@gainwix-workmates --scope local
 ```
-/plugin install gainwix@gainwix-workmates
+
+`--scope local` switches `/gx` on **for this repo only**, for you. Without it the
+install is for **every folder on your computer** (`user`, the default): the `/gx`
+commands, the deploy check on every command and the Google Cloud helper then load
+in every Claude session, including repos that never use `/gx`. Install it again,
+the same way, in each repo where you want it.
+
+In the Claude Code app, `/plugin install gainwix@gainwix-workmates` asks which
+scope to use. Pick **this repo only (local)**.
+
+**Already installed? Check where it is on:**
+
+```bash
+claude plugin list --json
+```
+
+Find `gainwix@gainwix-workmates` and read its `"scope"`: `user` means every folder,
+`local` or `project` means one repo. ⚠ An earlier install keeps its scope:
+installing again answers *already installed*, and `/plugin` offers *Update now*
+with no choice of folder. To move it to one repo:
+
+```bash
+claude plugin uninstall gainwix@gainwix-workmates --scope user
+cd /path/to/your/repo
+claude plugin install gainwix@gainwix-workmates --scope local
 ```
 
 ### 3. That's it — no install config
@@ -167,4 +195,4 @@ nothing `develop` lacks. `main` is protected against force pushes and deletion.
 
 See [TESTING.md](TESTING.md) for how to run the plugin from a local directory and validate it before publishing.
 
-This is a **private** repository. Not for public distribution.
+This repository is **public**: anyone can add the marketplace and install the plugin.

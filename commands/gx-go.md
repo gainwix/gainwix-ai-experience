@@ -234,6 +234,22 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
 7. Squash-merge the PR (`--squash --delete-branch`) once green. ⛔ **Not in
    driven mode** — there the driver merges.
 
+⛔ **No pull request possible? STOP and ask before merging.** When there is no
+`origin` remote, `gh` is not signed in, or the PR cannot be opened, do **not**
+decide on your own to merge the branch into `develop` locally. Ask with
+`AskUserQuestion`:
+
+- **Fix it and open the PR** *(recommended — first)*: give the one command that
+  fixes it (`gh auth login`, `git remote add origin …`), then continue.
+- **Merge locally this once**: `git checkout develop && git merge --squash <branch>`
+  and commit; the change record says *"merged locally, no PR"*.
+- **Stop here**: leave the branch unmerged and report.
+
+The pre-approval in `.gainwix/autonomy.md` covers *opening a PR and squash-merging
+it*, not replacing the PR with a local merge. When no one can be asked (a
+scripted run), take **Stop here**. In driven mode, report it to the driver
+instead of asking.
+
 A task may produce **more than one PR** — record every issue and PR.
 
 ### Tracked kanban issue (`Tracks #<N>`) — open a SUBORDINATE, never close `#<N>`

@@ -14,7 +14,7 @@ import path from "node:path";
 import { computeWaves } from "../graph.mjs";
 import { parseItems, parseMeta } from "../parse.mjs";
 import { render } from "../render.mjs";
-import { create, detect, INBOX_MARKER, README } from "../init.mjs";
+import { create, detect, EXCLUDES, INBOX_MARKER, README, setCommands } from "../init.mjs";
 
 function tmpRepo(files) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "gx-init-"));
@@ -253,4 +253,45 @@ test("⛔ a component name cannot climb out of .gainwix/, and a prefix is letter
   assert.throws(make("admin", "1AB"), /cannot be a serial prefix/);
   assert.ok(!fs.existsSync(path.join(root, "escaped")), "nothing was written outside .gainwix/");
   assert.ok(!fs.existsSync(path.join(root, ".gainwix")), "nor inside it");
+});
+
+test("⛔ create lists .DS_Store and .claude/worktrees/ in .git/info/exclude, once, and never in the repo root", () => {
+  const root = tmpRepo({ ".git/info/exclude": "# git's own header\n*.log" });
+  create(root, "api", "API", { render, computeWaves });
+  create(root, "web", "WEB", { render, computeWaves });
+  const text = fs.readFileSync(path.join(root, ".git/info/exclude"), "utf8");
+  for (const e of EXCLUDES) {
+    assert.equal(text.split("\n").filter((l) => l === e).length, 1, `${e} once`);
+  }
+  assert.ok(text.startsWith("# git's own header\n*.log\n"), "what was there is kept");
+  assert.ok(!fs.existsSync(path.join(root, ".gitignore")), "nothing written to the repo root");
+});
+
+test("create outside a git repo writes no exclude file", () => {
+  const root = tmpRepo({});
+  create(root, "api", "API", { render, computeWaves });
+  assert.ok(!fs.existsSync(path.join(root, ".git")));
+});
+
+test("⭐ setCommands fills only the placeholder rows and keeps a typed command", () => {
+  const root = tmpRepo({});
+  create(root, "api", "API", { render, computeWaves });
+  const file = path.join(root, ".gainwix/autonomy.md");
+  fs.writeFileSync(
+    file,
+    fs.readFileSync(file, "utf8").replace("| Lint | `<command>` |", "| Lint | `make lint` |"),
+  );
+  const filled = setCommands(root, { install: "npm ci", test: "npm test", lint: "eslint ." });
+  assert.deepEqual(filled, ["install", "test"]);
+  const text = fs.readFileSync(file, "utf8");
+  assert.match(text, /\| Install \/ setup \| `npm ci` \|/);
+  assert.match(text, /\| Test \| `npm test` \|/);
+  assert.match(text, /\| Lint \| `make lint` \|/, "the typed command is kept");
+  assert.match(text, /\| Coverage \*\(optional\)\* \| `<command>` \|/, "not given, left alone");
+});
+
+test("setCommands refuses a command that would break the table", () => {
+  const root = tmpRepo({});
+  create(root, "api", "API", { render, computeWaves });
+  assert.throws(() => setCommands(root, { test: "a | b" }), /cannot contain/);
 });
