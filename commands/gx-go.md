@@ -88,6 +88,19 @@ COMPONENT=<the resolved component>
   any code changes; the issue this run opens does not exist until Step 5. The PR
   link is written later, on the `completed` move.
 
+  ⛔ **Commit the move straight away, on `develop`, on its own:**
+
+  ```bash
+  git add .gainwix/<component>/backlog.html .gainwix/<component>/in-progress.html
+  git commit -m "chore(gx): <SERIAL> in progress"
+  git push origin develop   # only when there is an origin
+  ```
+
+  Left uncommitted, the two files sit changed on `develop` for the whole run —
+  and if the run stops early (a failed test, the no-PR question below), the next
+  `/gx-next` refuses on them. Seen in the 20 Nov test. If the push is refused,
+  say so in one line and carry on: the commit is what matters locally.
+
   ⛔ **That is the dequeue, and it happens now rather than at merge time.** An
   item in `in-progress.html` is *already taken*, so a parallel session will not
   pick up the same work — but it **unblocks nothing**. Only merging does that.
@@ -100,7 +113,8 @@ COMPONENT=<the resolved component>
 
   ⚠ **If the run fails or is abandoned, put it back:** `$GX move --id <SERIAL>
   --to backlog`. An item stranded in `in-progress.html` blocks everything behind
-  it and nothing will say so.
+  it and nothing will say so. Commit the put-back the same way
+  (`chore(gx): <SERIAL> back to the backlog`).
 
 - **Driven mode** — a driver (`/gx-sing`, `/gx-ping`) handed you **one item's
   serial, title, detail, spec, deps and lane**, taken from its captured
@@ -209,7 +223,15 @@ The file is written as you go — re-write/patch it at each milestone below.
 Run the project's standard one-PR-per-change workflow (one git worktree per
 session — see CLAUDE.md; never edit the shared main checkout). Typically:
 
-1. From a fresh branch off `origin/develop`, implement the task.
+1. **First, look for a parked branch for this item:**
+   `git fetch origin && git branch -a --list "*<SERIAL>*"`.
+   - **One exists** (an earlier run built it, went green, and stopped because no
+     pull request was possible): ⛔ **reuse it — never create a second branch for
+     the same serial.** Check it out in your worktree, rebase it onto
+     `origin/develop`, re-run the tests, and carry on from step 4. The work is
+     already done; only the PR was missing. Note *"reused parked branch
+     `<branch>`"* in the change record.
+   - **None:** from a fresh branch off `origin/develop`, implement the task.
 2. Run the project's test suite where appropriate (the exact command is declared
    in `.gainwix/autonomy.md` — e.g. `npm test`, `bin/rails test`,
    `pytest`, `go test ./...`, `make check`), only when the change touches code the
@@ -233,6 +255,24 @@ session — see CLAUDE.md; never edit the shared main checkout). Typically:
    `Closes #<new>` when one was created).
 7. Squash-merge the PR (`--squash --delete-branch`) once green. ⛔ **Not in
    driven mode** — there the driver merges.
+
+⛔ **No pull request possible? STOP and ask before merging.** When there is no
+`origin` remote, `gh` is not signed in, or the PR cannot be opened, do **not**
+decide on your own to merge the branch into `develop` locally. Ask with
+`AskUserQuestion`:
+
+- **Fix it and open the PR** *(recommended — first)*: give the one command that
+  fixes it (`gh auth login`, `git remote add origin …`), then continue.
+- **Merge locally this once**: `git checkout develop && git merge --squash <branch>`
+  and commit; the change record says *"merged locally, no PR"*.
+- **Stop here**: leave the branch pushed and unmerged — it is finished work, so do
+  not delete it; the next run picks it up (step 1). Report it as **"green, parked:
+  no PR possible"**, which is a set-up problem, not a fault in the work.
+
+The pre-approval in `.gainwix/autonomy.md` covers *opening a PR and squash-merging
+it*, not replacing the PR with a local merge. When no one can be asked (a
+scripted run), take **Stop here**. In driven mode, report it to the driver
+instead of asking.
 
 A task may produce **more than one PR** — record every issue and PR.
 

@@ -138,7 +138,7 @@ that's already in `.gainwix/<component>/inbox.md` won't be re-picked next run).
 git add .gainwix/<component>/inbox.md
 git commit -m "issue-pick: dequeue <N> queued issue(s) into the inbox (oldest-first)
 
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
 git push origin develop
 ```
 

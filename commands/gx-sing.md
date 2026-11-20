@@ -73,8 +73,20 @@ exist. The operator finishes it or returns it with
 
 ### 1 · Plan — top up the backlog from the inbox
 
-For each raw `- ` item below the `<!-- Add action items below this line -->`
-marker in `.gainwix/<component>/inbox.md`, top-down and **up to 5 this run**, run
+⛔ **Ask first — planning costs time and money, and can change the wave.** Count
+the raw `- ` items below the `<!-- Add action items below this line -->` marker in
+`.gainwix/<component>/inbox.md`. If there are none, skip to step 2. If there are
+some, ask with `AskUserQuestion` before planning anything:
+
+- **Build what's ready, plan nothing** *(recommended — first)*: the wave already
+  in the backlog, as it stands.
+- **Plan the top idea first**, then build.
+- **Plan up to 5 ideas first**, then build. Say it adds a few minutes per idea.
+
+When no one can be asked (a scripted run), plan nothing. The ideas wait for
+`/gx-next`.
+
+For each item the answer allows, top-down, run
 the `/gx-next` planning (`${CLAUDE_PLUGIN_ROOT}/commands/gx-next.md`) — **the
 whole of it, unmodified, including its own commit and push.** ⚠ **Do not batch
 those into one commit:** `/gx-next` commits per invocation, and overriding that
@@ -220,8 +232,14 @@ both.**
   on the rebased branch. A branch and a PR do exist: close or clearly park the
   PR, and delete the pushed branch. Leaving it costs the next run a name
   collision if `/gx-go` reaches for the same one.
+- **It went green, but no pull request was possible** — no `origin`, `gh` not
+  signed in, or the PR could not be opened, and no one chose a local merge.
+  ⭐ **This is a set-up problem, not a fault in the work.** ⛔ **Keep the pushed
+  branch** — it is the finished work, and the next `/gx-go` on this serial reuses
+  it instead of building it again. Commit the change record to `develop`, remove
+  the worktree.
 
-Both then:
+All three then:
 
 1. `$GX move --id <SERIAL> --to backlog`
 2. Record the error **verbatim** in the report — plus which of the two failures
@@ -287,6 +305,9 @@ one-line failure look like bad luck. It needs a person.
     ✗ <SERIAL>  <title>       never went green | would not merge
                               <reason verbatim>
                               returned to the backlog; blocking <M> item(s)
+    ⏸ <SERIAL>  <title>       green, parked: no PR possible
+                              branch <branch> kept; <the one command that fixes it>
+                              returned to the backlog; blocking <M> item(s)
 
   Next:  <see the table — one line, plus the "and behind it" line if both apply>
 ```
@@ -295,6 +316,7 @@ one-line failure look like bad luck. It needs a person.
 
 | Condition | Print |
 |---|---|
+| **Nothing merged, and every item that came back was "no PR possible"** | `wave <N> is built but not merged — no pull request was possible. <the one command that fixes it>, then run /gx-sing again; it reuses the branches.` ⛔ **Do not say "failed" or "fix <SERIAL>"** — the code is fine. |
 | **Nothing merged this run** | `wave <N> failed entirely — nothing merged. Fix <the failed SERIALs> before running again.` |
 | Closing `$GX ready` gives the **same** wave number | `wave <N> is unfinished — <its count> item(s) came back. Run /gx-sing again to retry.` |
 | Closing `$GX ready` gives a **higher** number | `wave <the number it returned> — <its count> item(s) ready. Run /gx-sing again.` |
@@ -314,8 +336,8 @@ operator acts on each differently.
 
 ## Notes
 
-- **`/gx-sing` vs `/gx-ping`.** Same scope — one wave, and both plan up to 5
-  inbox items first. Two real differences: `/gx-sing` works the items one at a
+- **`/gx-sing` vs `/gx-ping`.** Same scope — one wave, and both ask before
+  planning up to 5 inbox items first. Two real differences: `/gx-sing` works the items one at a
   time, `/gx-ping` builds them together — and in both, **the driver merges.** For a wave of one they do the same work.
   Use `/gx-sing` when the wave's items all touch the same files anyway, or to
   avoid the token cost of parallel teams.

@@ -178,7 +178,7 @@ else
 Removed: ${removed_ts[*]}
 Kept:    ${KEEP_TS:-<none — latest run was all-green>}
 
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
     git push origin HEAD:develop
     echo "Phase 0: committed cleanup of ${removed_count} run(s)."
   else

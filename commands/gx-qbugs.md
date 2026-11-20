@@ -176,7 +176,7 @@ for each new bug:
 git add qa/bug-evidence/
 git commit -m "qbugs: bug-evidence screenshots for run ${TS}
 
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
 git push origin develop
 EVIDENCE_SHA="$(git rev-parse HEAD)"     # pin Issue image URLs to this commit
 REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"   # owner/repo for raw URLs
@@ -269,7 +269,7 @@ preserve the marker + existing content. Do **not** plan or execute the fix here.
 git add .gainwix/<component>/inbox.md
 git commit -m "qbugs: file <N> bug(s) from run <TS> as issues + fix tasks
 
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+Co-Authored-By: Claude <noreply@anthropic.com>"
 git push origin develop
 ```
 
