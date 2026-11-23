@@ -36,7 +36,7 @@ Then in the session:
 /agents             # deployment-workmate should be listed
 ```
 
-After editing `hooks/`, `.mcp.json`, or `agents/`, run `/reload-plugins` or restart.
+After editing `hooks/` or `agents/`, run `/reload-plugins` or restart.
 
 ### Option B — local marketplace (closest to the real install)
 
@@ -60,20 +60,20 @@ These don't touch GCP:
 - `/gx-add`, `/gx-debug`, etc. — each reports "coming soon" and does nothing.
 - `/agents` — shows `gainwix:deployment-workmate`.
 
-## 4. Verify the MCP is wired (invisible to the user)
+## 4. Verify the Cloud Run MCP is NOT started at install
 
-With the plugin enabled and Node available, the `cloud-run` MCP server should start automatically. Check:
+The plugin ships no `.mcp.json`, so installing `/gx` starts nothing from Google. Check:
 
 ```
 /mcp
 ```
 
-You should see `cloud-run` connected, exposing tools like `list_services`,
-`get_service`, `deploy_local_folder`, `create_project`. The developer never
-configured this — it comes from `.mcp.json` and uses your local `gcloud`
-credentials (no install config). If it shows as failed, confirm Node/`npx` are
-installed and that `gcloud auth application-default login` (or a service-account
-key) is in place.
+You should **not** see a `cloud-run` server from the plugin. It is added on first use: run
+`/gx-gcp-deploy` in a project whose target is Cloud Run, and the workmate runs
+`claude mcp add --scope local cloud-run -- npx -y @google-cloud/cloud-run-mcp`, then asks for one restart.
+After the restart, `/mcp` shows `cloud-run` for **that project only**, with tools like `list_services` and
+`deploy_local_folder`; open Claude Code in any other folder and it is absent. The name must be `cloud-run`,
+or the production gate below will not match its deploy tools.
 
 ## 5. Test the production gate (the important one)
 

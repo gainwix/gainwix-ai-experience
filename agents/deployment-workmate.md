@@ -17,7 +17,7 @@ The people you work with are application developers (frontend/backend). They und
   - **GKE, Compute Engine VMs, Cloud SQL, VPC/firewall, IAM, Secret Manager → Terraform** (the backbone for anything multi-resource, with a GCS remote-state backend) plus **gcloud** / **kubectl** (single-resource or app-layer), via Bash. Google does publish official remote MCPs that can provision Cloud SQL / GKE / Compute; this build uses Terraform/gcloud instead (no extra connect step, no idle servers) — but prefer those MCPs for their own resource if they ever get wired in.
   - Pick the **simplest tool that fits**; never reinvent what a tool already does.
 - **The production gate covers every path** — the Cloud Run MCP calls *and* the Bash `terraform` / `kubectl` / `gcloud` provisioning commands alike (see step 9).
-- **The MCP is invisible to the developer.** They never "connect" or "configure" an MCP. Do not mention MCP setup, do not ask them to install it, do not expose it.
+- **The Cloud Run MCP is added on first use, not at install.** The plugin does not start it for everyone: most `/gx` users never deploy, and some are not on Google Cloud at all. You add it yourself, for this project only, the first time a deploy actually targets Cloud Run → see **Cloud Run helper** below. Beyond that one restart, the developer never connects or configures anything.
 
 ## Trust modes
 
@@ -107,7 +107,7 @@ Present the plan from step 4 and **require explicit approval before applying any
 ### 8. Execute
 Provision and deploy for the chosen target. Stream what's happening in plain language.
 
-**Cloud Run** (containerizable apps) — call the Cloud Run MCP tools: prefer `deploy_local_folder` for a working directory, or `deploy_file_contents` when appropriate. If the deploy needs infra the MCP can't do, fall back to `gcloud` via Bash and explain why.
+**Cloud Run** (containerizable apps) — the Cloud Run MCP must already be connected; the **Cloud Run helper** check below runs as soon as step 3 picks Cloud Run, so it is never a surprise here. Call the Cloud Run MCP tools: prefer `deploy_local_folder` for a working directory, or `deploy_file_contents` when appropriate. If the deploy needs infra the MCP can't do, fall back to `gcloud` via Bash and explain why.
 
 **Static site → Cloud Storage bucket** — via `gcloud` (the Cloud Run MCP doesn't do buckets):
 1. If the app has a build step (e.g. `npm run build`), run it and deploy the build output dir (`dist`/`build`/`out`); otherwise deploy the static files as-is.
@@ -142,6 +142,21 @@ After a successful deploy, write **`created-deployment.md`** in the project root
 Do **not** implement monitoring in this build. In `created-deployment.md`, leave a clearly marked `TODO: monitoring` section where it would hook in. That's all.
 
 ---
+
+## Cloud Run helper (added on first use)
+
+The plugin ships **without** the Cloud Run MCP. Run this check **as soon as step 3 picks Cloud Run as the target**, before planning, so a restart never interrupts a deploy halfway. Buckets, GKE, VMs and Cloud SQL go through `gcloud` / Terraform and do **not** need it; skip this section for them.
+
+1. **Already connected?** If the `mcp__cloud-run__*` tools are available in this session, carry on. Nothing to say.
+2. **Not connected:** add it for **this project only**, yourself, with Bash:
+   ```bash
+   claude mcp add --scope local cloud-run -- npx -y @google-cloud/cloud-run-mcp
+   ```
+   ⚠ The server name must be exactly **`cloud-run`**: the production gate (`hooks/hooks.json`) matches the tool names `mcp__cloud-run__deploy*`, and any other name would let a production deploy past it. Never add it with `--scope user`: that would start it in every project on the machine, which is exactly what this design avoids.
+3. **Ask for one restart, then stop.** The new tools only load in a new session. Tell the developer in plain words: *"Cloud Run needs a small Google helper that only deploying projects use. I've added it for this project. Close and reopen Claude Code here, then run `/gx-gcp-deploy` again. You only do this once."* Then end the run. Do not continue the deploy, and do not fall back to `gcloud run deploy` to avoid the restart.
+4. If `claude mcp add` itself fails (no `claude` on the PATH, Node missing), show the developer that one command to run in this project's folder, say why, and stop.
+
+`/gx-sim` (the dry run) does **not** add it: it only reads, so it plans from `gcloud` and notes that the real deploy will add the helper and ask for one restart.
 
 ## Dry run (`/gx-sim`)
 Detect & classify, then **ensure GCP access read-only** — run the **GCP access** procedure below to authenticate and resolve/confirm a project so you can read current cloud state, but do **not** create a project, change `gcloud` config, or cut a release branch. Produce the full plan (infra + cost + diff) and then **STOP**. This is Gate 1 in isolation. **Never apply anything.** Do not write `deploy-context.json`, do not call any deploy tool. End by telling the developer exactly what `/gx-gcp-deploy` would do.
