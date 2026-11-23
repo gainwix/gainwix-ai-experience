@@ -12,7 +12,7 @@ Distributed as a Claude Code plugin from this marketplace.
 
 - **Slash commands first.** The `/gx-*` commands are the product — thin entry points that run a workflow in your conversation: plan, build, QA, issue-tracking, and (when you want it) deploy. Most run right in the main chat.
 - **An agent for the heavy reasoning.** The deploy/onboarding commands lean on [`agents/deployment-workmate.md`](agents/deployment-workmate.md), a persona that owns that reasoning; the other commands follow their own command playbooks.
-- **GCP only when you deploy.** The deploy command talks to the external [Cloud Run MCP server](https://github.com/GoogleCloudPlatform/cloud-run-mcp) (wired in [`.mcp.json`](.mcp.json)) using your local `gcloud` — there's nothing to configure at install.
+- **GCP only when you deploy.** Installing `/gx` starts nothing from Google. The first time you deploy to Cloud Run, the deploy command adds the external [Cloud Run MCP server](https://github.com/GoogleCloudPlatform/cloud-run-mcp) for that project only and asks you to restart Claude Code once. Projects that never deploy, or aren't on Google Cloud, never run it.
 - **Hooks are the conscience.** [`hooks/gate-production.js`](hooks/gate-production.js) forces an interactive human approval before any production deploy — it can't be auto-approved. It covers **every** path — Cloud Run (MCP), the `gcloud storage` bucket path, and `terraform`/`gcloud`/`kubectl` for GKE/VM/Cloud SQL — which is why it also runs on `Bash`; see [`hooks/README.md`](hooks/README.md) for that design note and the tradeoff.
 
 ---
@@ -76,7 +76,7 @@ The plugin installs with **no setup prompts**. You get the `/gx` commands right 
 
 ### Prerequisites (only for the commands that need them)
 
-- **Node.js** — used by the deploy command's Cloud Run MCP (via `npx`), the production gate, and the QA runner. Not needed for the planning/building commands.
+- **Node.js** — used by the Cloud Run MCP the deploy command adds on first use (via `npx`), the production gate, and the QA runner. Not needed for the planning/building commands.
 - **gcloud CLI** — only for deploying. You don't sign in ahead of time; `/gx-gcp-deploy` opens the browser to sign you in when needed, and can find or create a project for you.
 - **A Google Cloud billing account** — only to actually deploy (Cloud Run needs billing). Adding a card is the one step only you can do; the deploy command points you there if it's missing.
 
